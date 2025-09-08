@@ -27,4 +27,13 @@ try:
     HAVE_FUZZ = True
 except Exception:
     HAVE_FUZZ = False
-    
+
+# Typer app object to register commands
+app = typer.Typer(add_completion=False)
+console = Console()
+
+@app.command()
+def add_perf(...):
+    """Add a new perfume to the catalogue."""
+    # Creates a new perfume and saves it to the JSON database using storage helpers
+    ...
