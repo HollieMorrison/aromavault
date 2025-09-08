@@ -21,4 +21,10 @@ from storage import (
 from recommender import recommend
 from utils import parse_csv_list, human_money, error, info
 
-
+#If fuzzy search library is installed.
+try:
+    from rapidfuzz import fuzz
+    HAVE_FUZZ = True
+except Exception:
+    HAVE_FUZZ = False
+    
