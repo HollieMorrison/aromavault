@@ -35,5 +35,23 @@ console = Console()
 @app.command()
 def add_perf(...):
     """Add a new perfume to the catalogue."""
-    # Creates a new perfume and saves it to the JSON database using storage helpers
+    # Creates a new perfume and saves it to the JSON database using storage helpers.
+    ...
+
+@app.command()
+def list_perfumes_cmd(...):
+    """List of perfumes with optional filters and sorting method"""
+# Filtering perfumes by brands or notes.
+...
+
+@app.command()
+def update(...):
+    """Update a perfume field by ID."""
+    # Allows the user to update any single field and includes input validation for numbers
+    ...
+
+@app.command()
+def remove(pid: str):
+    """Delete a perfume by ID."""
+    # This will remove a perfume from the database.
     ...
