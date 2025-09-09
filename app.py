@@ -57,10 +57,25 @@ def add_perf(
     info(f"Added: {p.name} by {p.brand} ({human_money(p.price)})")
 
 @app.command()
-def list_perfumes_cmd(...):
+def list_perfumes_cmd(
+    brand: Optional[str] = typer.Option(None, "--brand"),
+    note: Optional[str] = typer.Option(None, "--note"),
+    sort_by: str = typer.Option("name", "--sort", case_sensitive=False),
+    # Filtering perfumes by brands or notes.
+):
     """List of perfumes with optional filters and sorting method"""
-# Filtering perfumes by brands or notes.
-...
+    perfumes = list_perfumes() # This reads all perfumes from json storage.
+
+    # Apllies optional filters from the CLI
+    if brand:
+        perfumes = [p for p in perfumes if p["brand"].lower() == brand.lower()]
+    if note:
+        note_l = note.lower()
+        perfumes = [p for p in perfumes if note_l in [n.lower() for n in p.get("notes", [])]]
+
+    key = (lambda p: p.get("name", "").lower() if sort_by == "name" else ( lambda p: p.get("brand", "").lower() if sort_by == "brand" else ( lambda p: p.get("price", 0.0) if sort_by == "price" else ( lambda p: p.get("rating", 0.0)
+    ))))
+
 
 @app.command()
 def update(...):
