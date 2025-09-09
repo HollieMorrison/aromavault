@@ -105,6 +105,42 @@ def list_perfumes_cmd(
             str(p.get("stock", 0)),
         )
 
+  console.print(table)
+
+@app.command()
+def find(query: str = typer.Argument(..., help="Search name/brand")):
+    """Fuzzy search across name and brand."""
+    perfumes = list_perfumes()
+    q = query.lower()
+    
+    # Perfume Score function.
+    def score(p):
+        text = f"{p.get('name', '')} {p.get('brand', '')}".lower()
+        if HAVE_FUZZ:
+            return max(
+                fuzz.partial_ratio(q, text),
+            )
+        return 100 if q in text else (50 if any(w in text for w in q.split()) else 0)
+    
+    ranked = sorted(((p, score(p)) for p in perfumes), key=lambda t: t[1], reverse=True)
+    top = [t for t in ranked if t[1] > 0][:10]
+
+    # Shows top matches in perfumes table.
+
+    table = Table(title=f"Search results for '{query}' ({len(top)} )")
+    table.add_column("Match")
+    table.add_column("Name")
+    table.add_column("Brand")
+    table.add_column("Price")
+    for p, sc in top:
+        table.add_row(str(sc), p.get("name", ""), p.get("brand", ""), human_money(p.get("price", 0.0)))
+    console.print(table)
+
+
+
+
+
+
 
 @app.command()
 def update(...):
