@@ -34,7 +34,7 @@ console = Console()
 
 @app.command()
 def add_perf(...):
-    """Add a new perfume to the catalogue."""
+    """Add a new perfume to the catalogue"""
     # Creates a new perfume and saves it to the JSON database using storage helpers.
     ...
 
@@ -46,30 +46,48 @@ def list_perfumes_cmd(...):
 
 @app.command()
 def update(...):
-    """Update a perfume field by ID."""
+    """Update a perfume field by ID"""
     # Allows the user to update any single field and includes input validation for numbers
     ...
 
 @app.command()
 def remove(pid: str):
-    """Delete a perfume by ID."""
+    """Delete a perfume by ID"""
     # This will remove a perfume from the database.
     ...
 
 @app.command()
 def add_profile_cmd(...):
-    """Create a user profile."""
+    """Create a user profile"""
     # Shows profiles that are stored and relevant allergy information.
     ...
 
 @app.command()
 def list_profiles_cmd():
-    """List user Profiles."""
+    """List user Profiles"""
     # Displays all saved profiles in a rich table.
     ...
 
 @app.command()
 def recommend_cmd(...):
-    """Recommend perfumes for a profile OR ad-hoc input."""
+    """Recommend perfumes for a profile OR ad-hoc input"""
     # Uses recommender.py to rank perfumes due to personal preference and also flags if there is any allergies in that perfume.
+    ...
+
+@app.command()
+def export_csv_cmd(path: str):
+    """Export all perfumes to CSV"""
+    # Writes perfumes from JSON to CSV so its available to view in excel
+    ...
+
+@app.command()
+def import_csv_cmd(path: str):
+    """Import perfumes from CSV"""
+    # This reads a CSV file and skips duplicates and adds new entries.
+    ...
+
+@app.command()
+def seed_minimal():
+    """Load a minimal dataset for testing"""
+    # This adds 3 sample perfumes into the db for quick testing.
     ...
