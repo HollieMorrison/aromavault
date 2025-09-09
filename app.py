@@ -55,3 +55,21 @@ def remove(pid: str):
     """Delete a perfume by ID."""
     # This will remove a perfume from the database.
     ...
+
+@app.command()
+def add_profile_cmd(...):
+    """Create a user profile."""
+    # Shows profiles that are stored and relevant allergy information.
+    ...
+
+@app.command()
+def list_profiles_cmd():
+    """List user Profiles."""
+    # Displays all saved profiles in a rich table.
+    ...
+
+@app.command()
+def recommend_cmd(...):
+    """Recommend perfumes for a profile OR ad-hoc input."""
+    # Uses recommender.py to rank perfumes due to personal preference and also flags if there is any allergies in that perfume.
+    ...
