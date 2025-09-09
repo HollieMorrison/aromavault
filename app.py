@@ -44,7 +44,17 @@ def add_perf(
 ):
     """Add a new perfume to the catalogue"""
     # Creates a new perfume and saves it to the JSON database using storage helpers.
-    ...
+    p = Perfume.new(
+        name=name,
+        brand=brand,
+        price=price,
+        notes=parse_csv_list(notes),
+        allergens=parse_csv_list(allergens),
+        rating=rating,
+        stock=stock,
+    )
+    add_perfume(p)
+    info(f"Added: {p.name} by {p.brand} ({human_money(p.price)})")
 
 @app.command()
 def list_perfumes_cmd(...):
