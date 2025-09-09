@@ -74,7 +74,36 @@ def list_perfumes_cmd(
         perfumes = [p for p in perfumes if note_l in [n.lower() for n in p.get("notes", [])]]
 
     key = (lambda p: p.get("name", "").lower() if sort_by == "name" else ( lambda p: p.get("brand", "").lower() if sort_by == "brand" else ( lambda p: p.get("price", 0.0) if sort_by == "price" else ( lambda p: p.get("rating", 0.0)
-    ))))
+       )
+      )
+     )
+    )
+
+    perfumes.sort(key=key)
+
+    # Build a table with Rich
+
+    table = Table(title=f"Perfumes ({len(perfumes)})")
+    table.add_column("ID", no_wrap=True)
+    table.add_column("Name")
+    table.add_column("Brand")
+    table.add_column("Price")
+    table.add_column("Notes")
+    table.add_column("Allergens")
+    table.add_column("Rating")
+    table.add_column("Stock")
+
+    for p in perfumes: 
+        table.add_row(
+            p["id"][:8],
+            p.get("name", ""),
+            p.get("brand", ""),
+            human_money(p.get("price", 0.0)),
+            ", ".join(p.get("notes", [])),
+            ", ".join(p.get("allergens", [])),
+            str(p.get("rating", "")),
+            str(p.get("stock", 0)),
+        )
 
 
 @app.command()
