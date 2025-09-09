@@ -33,7 +33,15 @@ app = typer.Typer(add_completion=False)
 console = Console()
 
 @app.command()
-def add_perf(...):
+def add_perf(
+    name: str = typer.Argument(..., help="Perfume name"),
+    brand: str = typer.Option(..., "--brand", prompt=True),
+    price: float = typer.Option(..., "--price", prompt=True),
+    notes: str = typer.Option("", "--notes", help="Comma-separated notes"),
+    allergens: str = typer.Option("", "--allergens", help="Comma-separated allergens"),
+    rating: Optional[float] = typer.Option(None, "--rating"),
+    stock: int = typer.Option(0, "--stock"),
+):
     """Add a new perfume to the catalogue"""
     # Creates a new perfume and saves it to the JSON database using storage helpers.
     ...
