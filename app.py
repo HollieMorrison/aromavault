@@ -137,22 +137,56 @@ def find(query: str = typer.Argument(..., help="Search name/brand")):
     console.print(table)
 
 
-
-
-
-
-
 @app.command()
-def update(...):
+def update(
+    pid: str = typer.Argument(..., help="Perfume ID (first 8 chars accepted)"),
+    field: str = typer.Argument(..., help="Field to update: name|brand|price|notes|allergens|rating|stock"),
+    value: str = typer.Argument(..., help="New value (use comma-separated for notes/allergens)"),
+):
     """Update a perfume field by ID"""
     # Allows the user to update any single field and includes input validation for numbers
-    ...
+    full = _resolve_id(pid)
+    if not full: 
+        return error("No perfume found for that ID.")
+    
+    # Convert CLI string 'value' into the correct Python type depending on the field
+    updates = {}
+    if field in {"name", "brand"}:
+        updates[field] = value
+    elif field in {"price", "rating"}:
+       try: 
+           updates[field] = float(value)
+       except ValueError: 
+           return error("Value must be a number.")
+    elif field == "stock":
+       try: 
+           updates[field] = int(value)
+       except ValueError:
+           return error("Stock must be an integer.")
+    elif field in {"notes", "allergens"}:
+        updates[field] = parse_csv_list(value)
+    else:
+        return error("unknown field.")
+    
+    ok = updated_perfume(full, **updates)
+    if ok:
+        info("Updated successfully.")
+    else:
+        error("Update failed, please try again.")
+        
+    
 
 @app.command()
 def remove(pid: str):
     """Delete a perfume by ID"""
     # This will remove a perfume from the database.
-    ...
+    full = _resolve_id(pid)
+    if not full:
+        return error("No perfume found for that ID.")
+    if delete_perfume(full):
+        info("Deleted.")
+    else:
+        error("Delete perfume failed.")
 
 @app.command()
 def add_profile_cmd(...):
