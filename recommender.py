@@ -19,3 +19,9 @@ def score_perfume(perfume: Dict, preferred: List[str], avoid_allergens: List[str
     base = jaccard([n.lower() for n in preferred], [n.lower() for n in perfume.get("notes", [])])
     penalty = 0.5 if set(a.lower() for a in perfume.get("allergens", [])) & set(a.lower() for a in avoid_allergens) else 0.0
     return max(0.0, base - penalty)
+
+def recommend(perfumes: List[Dict], preferred: List[str], avoid_allergens: List[str], k: int = 5) -> List[Tuple[Dict, float]]:
+    scored = [(p, score_perfume(p, preferred, avoid_allergens)) for p in perfumes]
+    scored = [t for t in scored if t[1] > 0.0] # drop zero scores
+    scored.sort(key=lambda x: x[1], reverse=True)
+    return scored [:k]
