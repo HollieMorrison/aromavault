@@ -1,0 +1,11 @@
+# Runtime and dev tools
+# typer[all]: CLI framework with autocompletion & prompts
+# rich: pretty tables and styled text in terminal
+# rapidfuzz: optional fuzzy matching for search
+# black: opinionated formatter
+# ruff: fast linter
+typer[all]
+rich
+rapidfuzz
+black
+ruff

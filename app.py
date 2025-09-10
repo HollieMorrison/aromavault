@@ -66,7 +66,7 @@ def list_perfumes_cmd(
     """List of perfumes with optional filters and sorting method"""
     perfumes = list_perfumes() # This reads all perfumes from json storage.
 
-    # Apllies optional filters from the CLI
+    # Applies optional filters from the CLI
     if brand:
         perfumes = [p for p in perfumes if p["brand"].lower() == brand.lower()]
     if note:
@@ -105,7 +105,7 @@ def list_perfumes_cmd(
             str(p.get("stock", 0)),
         )
 
-  console.print(table)
+console.print(table)
 
 @app.command()
 def find(query: str = typer.Argument(..., help="Search name/brand")):
