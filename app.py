@@ -84,11 +84,7 @@ def list_perfumes_cmd(
         else (
             (lambda p: p.get("brand", "").lower())
             if sort_by == "brand"
-            else (
-                (lambda p: p.get("price", 0.0))
-                if sort_by == "price"
-                else (lambda p: p.get("rating", 0.0))
-            )
+            else ((lambda p: p.get("price", 0.0)) if sort_by == "price" else (lambda p: p.get("rating", 0.0)))
         )
     )
 
