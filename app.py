@@ -262,10 +262,10 @@ table.add_row(f"{sc:.2f}", p["name"], p["brand"], ", ".join(p.get("notes", [])),
 console.print(table)
 
 @app.command()
-def export_csv_cmd(path: str):
-    """Export all perfumes to CSV"""
-    # Writes perfumes from JSON to CSV so its available to view in excel
-    ...
+def export_csv_cmd(path: str = typer.Argument(...)):
+ """Export all perfumes to CSV at PATH."""
+count = export_csv(path)
+info(f"Exported {count} rows to {path}")
 
 @app.command()
 def import_csv_cmd(path: str):
