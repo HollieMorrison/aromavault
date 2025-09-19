@@ -204,11 +204,21 @@ def add_profile_cmd(
 add_profile(profile)
 info(f"Profile created: {profile.name}")
 
-@app.command()
+@app.command("profiles")
 def list_profiles_cmd():
     """List user Profiles"""
     # Displays all saved profiles in a rich table.
-    ...
+    profiles = list_profiles()
+    table = Table(title=f"Profiles ({len(profiles)})")
+    table.add_column("ID", no_wrap=True)
+    table.add_column("Name")
+    table.add_column("Preferred Notes")
+    table.add_column("Avoid Allergens")
+    for pr in profiles:
+        table.add_row(
+            pr["id"][:8], pr.get("name", ""), ", ".join(pr.get("preferred_notes", [])), ", ".join(pr.get("avoid_allergens", []))
+        )
+    console.print(table)
 
 @app.command()
 def recommend_cmd(...):
