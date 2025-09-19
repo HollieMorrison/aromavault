@@ -87,3 +87,26 @@ changed = len(db["perfumes"]) != before
 if changed:
 save_db(db)
 return changed
+
+# ---------- Profiles ----------
+
+
+def add_profile(profile: UserProfile) -> None:
+"""Append a new user profile to the DB and save."""
+db = load_db()
+db["profiles"].append(asdict(profile))
+save_db(db)
+
+
+
+
+def list_profiles() -> List[dict]:
+"""Return all user profiles from the DB."""
+return load_db()["profiles"]
+
+
+
+
+def get_profile(pid: str) -> Optional[dict]:
+"""Fetch a single profile by exact UUID."""
+return next((p for p in list_profiles() if p["id"] == pid), None)
