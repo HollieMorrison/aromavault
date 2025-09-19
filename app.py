@@ -216,15 +216,50 @@ def list_profiles_cmd():
     table.add_column("Avoid Allergens")
     for pr in profiles:
         table.add_row(
-            pr["id"][:8], pr.get("name", ""), ", ".join(pr.get("preferred_notes", [])), ", ".join(pr.get("avoid_allergens", []))
-        )
-    console.print(table)
+        pr["id"][:8], pr.get("name", ""), ", ".join(pr.get("preferred_notes", [])), ", ".join(pr.get("avoid_allergens", []))
+    )
+console.print(table)
 
 @app.command()
-def recommend_cmd(...):
+def recommend_cmd(
+    profile_id: Optional[str] = typer.Option(None, "--profile"),
+preferred_notes: str = typer.Option("", "--preferred"),
+avoid_allergens: str = typer.Option("", "--avoid"),
+top_k: int = typer.Option(5, "--top"),
+):
     """Recommend perfumes for a profile OR ad-hoc input"""
     # Uses recommender.py to rank perfumes due to personal preference and also flags if there is any allergies in that perfume.
-    ...
+perfumes = list_perfumes()
+
+
+# Two modes: use a saved profile (by ID) or use the ad‑hoc CLI inputs
+if profile_id:
+full = _resolve_profile_id(profile_id)
+if not full:
+return error("No profile found for that ID.")
+profile = get_profile(full)
+preferred = profile.get("preferred_notes", [])
+avoid = profile.get("avoid_allergens", [])
+else:
+preferred = parse_csv_list(preferred_notes)
+avoid = parse_csv_list(avoid_allergens)
+
+
+# Call the recommender to rank perfumes and show the top K
+ranked = recommend(perfumes, preferred, avoid, k=top_k)
+if not ranked:
+return error("No suitable recommendations found.")
+
+
+table = Table(title="Recommendations")
+table.add_column("Score")
+table.add_column("Name")
+table.add_column("Brand")
+table.add_column("Notes")
+table.add_column("Price")
+for p, sc in ranked:
+table.add_row(f"{sc:.2f}", p["name"], p["brand"], ", ".join(p.get("notes", [])), human_money(p.get("price", 0.0)))
+console.print(table)
 
 @app.command()
 def export_csv_cmd(path: str):
