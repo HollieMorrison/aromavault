@@ -189,10 +189,20 @@ def remove(pid: str):
         error("Delete perfume failed.")
 
 @app.command()
-def add_profile_cmd(...):
+def add_profile_cmd(
+    name: str = typer.Argument(...),
+    preferred_notes: str = typer.Option("", "--preferred", help="Comma-separated"),
+    avoid_allergens: str = typer.Option("", "--avoid", help="Comma-separated"),
+):
     """Create a user profile"""
     # Shows profiles that are stored and relevant allergy information.
-    ...
+    profile = UserProfile.new(
+   name=name,
+   preferred_notes=parse_csv_list(preferred_notes),
+   avoid_allergens=parse_csv_list(avoid_allergens),
+)
+add_profile(profile)
+info(f"Profile created: {profile.name}")
 
 @app.command()
 def list_profiles_cmd():
