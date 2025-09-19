@@ -1,27 +1,28 @@
 # Main entry for my aromavault CLI application.
 # Uses Typer to manage commands and Rich to make outputs look better.
 
-from typing import Optional
 import sys
+from typing import Optional
+
 import typer
 from rich.console import Console
 from rich.table import Table
 
 # Importing dataclasses and functions from other modules.
 from models import Perfume, UserProfile
+from recommender import recommend
 from storage import (
     add_perfume,
     add_profile,
+    delete_perfume,
+    export_csv,
+    get_profile,
+    import_csv,
     list_perfumes,
     list_profiles,  # <-- missing in your version
-    get_profile,
     update_perfume,
-    delete_perfume,
-    import_csv,
-    export_csv,
 )
-from recommender import recommend
-from utils import parse_csv_list, human_money, error, info
+from utils import error, human_money, info, parse_csv_list
 
 # If fuzzy search library is installed.
 try:

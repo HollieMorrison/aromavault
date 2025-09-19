@@ -1,11 +1,11 @@
-from typing import List
+from typing import list
 from rich.console import Console
 
 # Reusable console instance for styled output
 _console = Console()
 
 
-def parse_csv_list(value: str) -> List[str]:
+def parse_csv_list(value: str) -> list[str]:
     """Turn a comma-separated string into a clean list; handle empty input safely."""
     if not value:
         return []
