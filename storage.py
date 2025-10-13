@@ -3,14 +3,14 @@ from dataclasses import asdict
 from pathlib import Path
 import csv
 import json
-from typing import Dict, List, Optional
+from typing import dict, list, Optional
 
 from models import Perfume, UserProfile
 
 # File-based storage configuration
 DATA_DIR = Path("data")
 DB_PATH = DATA_DIR / "db.json"
-DEFAULT_DB: Dict[str, List[dict]] = {"perfumes": [], "profiles": []}
+DEFAULT_DB: dict[str, list[dict]] = {"perfumes": [], "profiles": []}
 
 
 def _ensure_db() -> None:
@@ -20,13 +20,13 @@ def _ensure_db() -> None:
         DB_PATH.write_text(json.dumps(DEFAULT_DB, indent=2))
 
 
-def load_db() -> Dict[str, List[dict]]:
+def load_db() -> dict[str, list[dict]]:
     """Load the entire JSON DB into memory as a Python dict."""
     _ensure_db()
     return json.loads(DB_PATH.read_text())
 
 
-def save_db(db: Dict[str, List[dict]]) -> None:
+def save_db(db: dict[str, list[dict]]) -> None:
     """Persist the in-memory DB back to disk in a human-readable format."""
     DB_PATH.write_text(json.dumps(db, indent=2))
 
@@ -41,7 +41,7 @@ def add_perfume(p: Perfume) -> None:
     save_db(db)
 
 
-def list_perfumes() -> List[dict]:
+def list_perfumes() -> list[dict]:
     """Return all perfume dicts from the DB."""
     return load_db()["perfumes"]
 
@@ -84,7 +84,7 @@ def add_profile(profile: UserProfile) -> None:
     save_db(db)
 
 
-def list_profiles() -> List[dict]:
+def list_profiles() -> list[dict]:
     """Return all user profiles from the DB."""
     return load_db()["profiles"]
 
