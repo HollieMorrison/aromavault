@@ -259,3 +259,72 @@ def export_csv(csv_path, path: Optional[Path] = None) -> int:
 def get_profile(uid: str, path: Optional[Path] = None):
     """Legacy alias: get_profile -> get_profile_by_id."""
     return get_profile_by_id(uid, path)
+
+# ===== CSV import (perfumes) =====
+def import_csv(csv_path, path: Optional[Path] = None, overwrite: bool = False) -> int:
+    """
+    Import perfumes from a CSV file into the JSON catalog.
+    - csv_path: source CSV (str or Path)
+    - path: destination JSON DB (defaults to DEFAULT_DB)
+    - overwrite: if True, replace the DB with the CSV rows; otherwise upsert by 'id'
+    Returns number of rows ingested.
+    """
+    import csv
+    from pathlib import Path as _P
+
+    db_path = path or DEFAULT_DB
+    csv_path = _P(csv_path)
+
+    if not csv_path.exists():
+        raise FileNotFoundError(f"CSV not found: {csv_path}")
+
+    # Read existing data (for upsert mode)
+    existing = [] if overwrite else load_all(db_path)
+    by_id = {str(x.get("id")): x for x in existing if "id" in x}
+
+    ingested = 0
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if not row:
+                continue
+            # Normalize keys and fields
+            item = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items() if k}
+
+            # Ensure required fields exist
+            if not item.get("id"):
+                # skip rows without an id
+                continue
+
+            # notes: string -> list[str]
+            notes_val = item.get("notes", "")
+            if isinstance(notes_val, str) and notes_val:
+                # split on ';' primarily, fall back to ','
+                sep = ";" if ";" in notes_val else ("," if "," in notes_val else None)
+                item["notes"] = [s.strip() for s in (notes_val.split(sep) if sep else [notes_val]) if s.strip()]
+            elif isinstance(notes_val, list):
+                # already a list
+                pass
+            else:
+                item["notes"] = []
+
+            # price: to float if possible
+            if "price" in item and item["price"] != "":
+                try:
+                    item["price"] = float(item["price"])
+                except (TypeError, ValueError):
+                    # leave as-is if not convertible
+                    pass
+
+            # Upsert or collect for overwrite
+            if overwrite:
+                by_id[str(item["id"])] = item
+            else:
+                upsert(item, db_path)
+            ingested += 1
+
+    if overwrite:
+        # Replace DB with imported items
+        save_all(list(by_id.values()), db_path)
+
+    return ingested
