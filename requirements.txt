@@ -9,3 +9,8 @@ rich
 rapidfuzz
 black
 ruff
+
+pytest # For testing
+pytest-cov # For testing
+ruff
+black
