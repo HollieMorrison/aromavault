@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import list, Optional
+from typing import Optional
 import uuid
 
 

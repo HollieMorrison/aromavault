@@ -5,6 +5,11 @@ import sys
 from typing import Optional
 
 import typer
+
+app = typer.Typer()
+
+
+import typer
 from rich.console import Console
 from rich.table import Table
 
