@@ -1,10 +1,12 @@
-from typer.testing import CliRunner
 import importlib
 
+from typer.testing import CliRunner
+
 # Import your Typer app object from app.py
-app = getattr(importlib.import_module("app"), "app")
+app = importlib.import_module("app").app
 
 runner = CliRunner()
+
 
 def test_cli_help_displays_usage():
     r = runner.invoke(app, ["--help"])

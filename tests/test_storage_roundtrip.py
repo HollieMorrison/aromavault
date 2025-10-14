@@ -1,6 +1,5 @@
-import json
-from pathlib import Path
 import importlib
+from pathlib import Path
 
 storage = importlib.import_module("storage")
 recommender = importlib.import_module("recommender")
@@ -12,7 +11,13 @@ def test_storage_crud_roundtrip(tmp_path: Path):
     assert storage.load_all(db) == []
 
     # Upsert one item
-    item = {"id": "p1", "name": "Citrus Splash", "brand": "Demo", "notes": ["citrus", "fresh"], "price": 45.0}
+    item = {
+        "id": "p1",
+        "name": "Citrus Splash",
+        "brand": "Demo",
+        "notes": ["citrus", "fresh"],
+        "price": 45.0,
+    }
     storage.upsert(item, db)
 
     # Read it back
@@ -36,9 +41,27 @@ def test_storage_crud_roundtrip(tmp_path: Path):
 
 def test_recommender_basic():
     catalog = [
-        {"id": "a", "name": "Green Leaf", "brand": "BrandA", "notes": ["green", "herbal"], "price": 70},
-        {"id": "b", "name": "Citrus Pop", "brand": "BrandB", "notes": ["citrus", "fresh"], "price": 40},
-        {"id": "c", "name": "Vanilla Dream", "brand": "BrandC", "notes": ["vanilla", "sweet"], "price": 60},
+        {
+            "id": "a",
+            "name": "Green Leaf",
+            "brand": "BrandA",
+            "notes": ["green", "herbal"],
+            "price": 70,
+        },
+        {
+            "id": "b",
+            "name": "Citrus Pop",
+            "brand": "BrandB",
+            "notes": ["citrus", "fresh"],
+            "price": 40,
+        },
+        {
+            "id": "c",
+            "name": "Vanilla Dream",
+            "brand": "BrandC",
+            "notes": ["vanilla", "sweet"],
+            "price": 60,
+        },
     ]
     top = recommender.recommend(
         catalog,

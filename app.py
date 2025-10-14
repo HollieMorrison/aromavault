@@ -1,19 +1,14 @@
 # Main entry for my aromavault CLI application.
 # Uses Typer to manage commands and Rich to make outputs look better.
+"""AromaVault CLI."""
 
 import sys
 from typing import Optional
 
 import typer
-
-app = typer.Typer()
-
-
-import typer
 from rich.console import Console
 from rich.table import Table
 
-# Importing dataclasses and functions from other modules.
 from models import Perfume, UserProfile
 from recommender import recommend
 from storage import (
@@ -24,7 +19,7 @@ from storage import (
     get_profile,
     import_csv,
     list_perfumes,
-    list_profiles,  # <-- missing in your version
+    list_profiles,
     update_perfume,
 )
 from utils import error, human_money, info, parse_csv_list
@@ -80,7 +75,9 @@ def list_perfumes_cmd(
         perfumes = [p for p in perfumes if p["brand"].lower() == brand.lower()]
     if note:
         note_l = note.lower()
-        perfumes = [p for p in perfumes if note_l in [n.lower() for n in p.get("notes", [])]]
+        perfumes = [
+            p for p in perfumes if note_l in [n.lower() for n in p.get("notes", [])]
+        ]
 
     # Choose a sorting key dynamically based on --sort option
     key = (
@@ -89,7 +86,11 @@ def list_perfumes_cmd(
         else (
             (lambda p: p.get("brand", "").lower())
             if sort_by == "brand"
-            else ((lambda p: p.get("price", 0.0)) if sort_by == "price" else (lambda p: p.get("rating", 0.0)))
+            else (
+                (lambda p: p.get("price", 0.0))
+                if sort_by == "price"
+                else (lambda p: p.get("rating", 0.0))
+            )
         )
     )
 
@@ -157,8 +158,12 @@ def find(query: str = typer.Argument(..., help="Search name/brand")):
 @app.command()
 def update(
     pid: str = typer.Argument(..., help="Perfume ID (first 8 chars accepted)"),
-    field: str = typer.Argument(..., help="Field: name|brand|price|notes|allergens|rating|stock"),
-    value: str = typer.Argument(..., help="New value (comma-separated for notes/allergens)"),
+    field: str = typer.Argument(
+        ..., help="Field: name|brand|price|notes|allergens|rating|stock"
+    ),
+    value: str = typer.Argument(
+        ..., help="New value (comma-separated for notes/allergens)"
+    ),
 ):
     """Update a perfume field by ID."""
     full = _resolve_id(pid)

@@ -1,6 +1,6 @@
+import uuid
 from dataclasses import dataclass, field
 from typing import Optional
-import uuid
 
 
 # Dataclass for a perfume record stored in our JSON database
@@ -47,7 +47,9 @@ class UserProfile:
     avoid_allergens: list[str] = field(default_factory=list)
 
     @staticmethod
-    def new(name: str, preferred_notes: list[str], avoid_allergens: list[str]) -> "UserProfile":
+    def new(
+        name: str, preferred_notes: list[str], avoid_allergens: list[str]
+    ) -> "UserProfile":
         """Factory that lowercases and trims list values to keep the data clean."""
         return UserProfile(
             id=str(uuid.uuid4()),

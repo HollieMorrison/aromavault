@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Optional
 
-
 # Default data file (you can override by passing a Path to functions)
 DEFAULT_DB = Path("data.json")
 
@@ -181,7 +180,9 @@ def search_perfumes(
     path: Optional[Path] = None,
 ) -> list[dict]:
     """Legacy name: search helper."""
-    return search(query=query, brand=brand, notes_any=notes_any, price_max=price_max, path=path)
+    return search(
+        query=query, brand=brand, notes_any=notes_any, price_max=price_max, path=path
+    )
 
 
 # ===== Profile compatibility (separate JSON file) =====
@@ -236,7 +237,9 @@ def export_csv(csv_path, path: Optional[Path] = None) -> int:
     base_order = ["id", "name", "brand", "notes", "price"]
     keys = set().union(*(it.keys() for it in items)) if items else set(base_order)
     # Keep base_order first, then any extra keys
-    fieldnames = [k for k in base_order if k in keys] + [k for k in sorted(keys) if k not in base_order]
+    fieldnames = [k for k in base_order if k in keys] + [
+        k for k in sorted(keys) if k not in base_order
+    ]
 
     # Ensure parent directory exists
     csv_path = _P(csv_path)
@@ -255,10 +258,12 @@ def export_csv(csv_path, path: Optional[Path] = None) -> int:
             written += 1
     return written
 
+
 # --- Alias for legacy import name expected by app.py ---
 def get_profile(uid: str, path: Optional[Path] = None):
     """Legacy alias: get_profile -> get_profile_by_id."""
     return get_profile_by_id(uid, path)
+
 
 # ===== CSV import (perfumes) =====
 def import_csv(csv_path, path: Optional[Path] = None, overwrite: bool = False) -> int:
@@ -289,7 +294,11 @@ def import_csv(csv_path, path: Optional[Path] = None, overwrite: bool = False) -
             if not row:
                 continue
             # Normalize keys and fields
-            item = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items() if k}
+            item = {
+                k.strip(): (v.strip() if isinstance(v, str) else v)
+                for k, v in row.items()
+                if k
+            }
 
             # Ensure required fields exist
             if not item.get("id"):
@@ -301,7 +310,11 @@ def import_csv(csv_path, path: Optional[Path] = None, overwrite: bool = False) -
             if isinstance(notes_val, str) and notes_val:
                 # split on ';' primarily, fall back to ','
                 sep = ";" if ";" in notes_val else ("," if "," in notes_val else None)
-                item["notes"] = [s.strip() for s in (notes_val.split(sep) if sep else [notes_val]) if s.strip()]
+                item["notes"] = [
+                    s.strip()
+                    for s in (notes_val.split(sep) if sep else [notes_val])
+                    if s.strip()
+                ]
             elif isinstance(notes_val, list):
                 # already a list
                 pass
