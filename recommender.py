@@ -1,40 +1,83 @@
+from __future__ import annotations
+
+from typing import Optional
 
 
-# Basic set-based similarities between notes.
-# Jaccard = |intersection| / |union|
-# Returns 0..1 where 1 means identical sets.
+def _norm_set(values: Optional[list[str]]) -> set[str]:
+    if not values:
+        return set()
+    return {str(v).casefold().strip() for v in values if isinstance(v, str) and v.strip()}
 
 
-def jaccard(a: list[str], b: list[str]) -> float:
-    (
-        sa,
-        sb,
-    ) = set(
-        a
-    ), set(b)
-    if not sa and not sb:
-        return 0.0
-    inter = sa & sb
-    union = sa | sb
-    return len(inter) / len(union)
+def score_perfume(
+    perfume: dict,
+    preferred_notes: Optional[list[str]] = None,
+    avoid_notes: Optional[list[str]] = None,
+    brand_bias: Optional[str] = None,
+    price_max: Optional[float] = None,
+) -> float:
+    """
+    Return a relevance score for a single perfume.
 
+    Heuristic:
+      +2 per matching preferred note
+      -2 per matching avoided note
+      +1 if brand matches preferred brand
+      Small bonus if price <= price_max (scaled)
+    """
+    notes = _norm_set(perfume.get("notes"))
+    prefs = _norm_set(preferred_notes)
+    avoid = _norm_set(avoid_notes)
+    score = 0.0
 
-# compute a recommendation score for a single perfume depending on users choices.
-# Score = similarity(preferred_notes, perfume.notes) - penalty if the perfume has avoided allergies.
+    # Preferred notes
+    score += 2.0 * len(notes.intersection(prefs))
 
+    # Avoid notes
+    score -= 2.0 * len(notes.intersection(avoid))
 
-def score_perfume(perfume: dict, preferred: list[str], avoid_allergens: list[str]) -> float:
-    base = jaccard([n.lower() for n in preferred], [n.lower() for n in perfume.get("notes", [])])
-    penalty = (
-        0.5 if set(a.lower() for a in perfume.get("allergens", [])) & set(a.lower() for a in avoid_allergens) else 0.0
-    )
-    return max(0.0, base - penalty)
+    # Brand bias
+    if brand_bias:
+        if str(perfume.get("brand", "")).casefold().strip() == brand_bias.casefold().strip():
+            score += 1.0
+
+    # Price consideration
+    if price_max is not None:
+        try:
+            price = float(perfume.get("price"))
+            # If within budget, add a small bonus that grows as price is lower than max
+            if price <= float(price_max):
+                # e.g., price_max 100, price 80 -> (100-80)/100 = 0.2
+                score += max(0.0, (float(price_max) - price) / max(1.0, float(price_max)))
+            else:
+                # over budget slightly penalized
+                score -= 0.5
+        except (TypeError, ValueError):
+            pass
+
+    return score
 
 
 def recommend(
-    perfumes: list[dict], preferred: list[str], avoid_allergens: list[str], k: int = 5
-) -> list[tuple[dict, float]]:
-    scored = [(p, score_perfume(p, preferred, avoid_allergens)) for p in perfumes]
-    scored = [t for t in scored if t[1] > 0.0]  # drop zero scores
-    scored.sort(key=lambda x: x[1], reverse=True)
-    return scored[:k]
+    catalog: list[dict],
+    preferred_notes: Optional[list[str]] = None,
+    avoid_notes: Optional[list[str]] = None,
+    brand_bias: Optional[str] = None,
+    price_max: Optional[float] = None,
+    k: int = 5,
+) -> list[dict]:
+    """
+    Rank perfumes in `catalog` by a simple heuristic score and return top-k.
+    """
+    ranked = sorted(
+        catalog,
+        key=lambda p: score_perfume(
+            p,
+            preferred_notes=preferred_notes,
+            avoid_notes=avoid_notes,
+            brand_bias=brand_bias,
+            price_max=price_max,
+        ),
+        reverse=True,
+    )
+    return ranked[: max(1, int(k))]

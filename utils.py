@@ -1,4 +1,3 @@
-
 from rich.console import Console
 
 # Reusable console instance for styled output

@@ -1,148 +1,141 @@
 from __future__ import annotations
-from dataclasses import asdict
-from pathlib import Path
-import csv
+
 import json
+from pathlib import Path
 from typing import Optional
 
-from models import Perfume, UserProfile
 
-# File-based storage configuration
-DATA_DIR = Path("data")
-DB_PATH = DATA_DIR / "db.json"
-DEFAULT_DB: dict[str, list[dict]] = {"perfumes": [], "profiles": []}
+# Default data file (you can override by passing a Path to functions)
+DEFAULT_DB = Path("data.json")
 
 
-def _ensure_db() -> None:
-    """Create the data directory and JSON DB file if they don't exist."""
-    DATA_DIR.mkdir(exist_ok=True)
-    if not DB_PATH.exists():
-        DB_PATH.write_text(json.dumps(DEFAULT_DB, indent=2))
+def _read_json(path: Path) -> list[dict]:
+    """
+    Read a JSON file that stores a list of perfume dicts.
+    Returns an empty list if the file doesn't exist or is empty/invalid.
+    """
+    try:
+        if not path.exists():
+            return []
+        text = path.read_text(encoding="utf-8").strip()
+        if not text:
+            return []
+        data = json.loads(text)
+        if isinstance(data, list):
+            return [x for x in data if isinstance(x, dict)]
+        return []
+    except (OSError, json.JSONDecodeError):
+        # Friendly failure: treat as empty dataset
+        return []
 
 
-def load_db() -> dict[str, list[dict]]:
-    """Load the entire JSON DB into memory as a Python dict."""
-    _ensure_db()
-    return json.loads(DB_PATH.read_text())
+def _write_json(path: Path, data: list[dict]) -> None:
+    """
+    Write list of dicts to JSON file, creating parent dirs if needed.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def save_db(db: dict[str, list[dict]]) -> None:
-    """Persist the in-memory DB back to disk in a human-readable format."""
-    DB_PATH.write_text(json.dumps(db, indent=2))
+def load_all(path: Optional[Path] = None) -> list[dict]:
+    """
+    Load the entire dataset from JSON.
+    """
+    return _read_json(path or DEFAULT_DB)
 
 
-# ---------- Perfumes ----------
+def save_all(items: list[dict], path: Optional[Path] = None) -> None:
+    """
+    Overwrite the dataset with the provided list of dicts.
+    """
+    _write_json(path or DEFAULT_DB, items)
 
 
-def add_perfume(p: Perfume) -> None:
-    """Append a new perfume record to the JSON array and save."""
-    db = load_db()
-    db["perfumes"].append(asdict(p))
-    save_db(db)
+def get_by_id(pid: str, path: Optional[Path] = None) -> Optional[dict]:
+    """
+    Return the perfume dict with matching id, or None if not found.
+    """
+    items = load_all(path)
+    for it in items:
+        if str(it.get("id")) == str(pid):
+            return it
+    return None
 
 
-def list_perfumes() -> list[dict]:
-    """Return all perfume dicts from the DB."""
-    return load_db()["perfumes"]
+def upsert(item: dict, path: Optional[Path] = None) -> dict:
+    """
+    Insert or update a perfume by its 'id' field.
+    Returns the stored item.
+    """
+    if "id" not in item:
+        raise ValueError("Item must contain an 'id' field")
+    db_path = path or DEFAULT_DB
+    items = load_all(db_path)
+    updated = False
+    for idx, it in enumerate(items):
+        if str(it.get("id")) == str(item["id"]):
+            items[idx] = {**it, **item}
+            updated = True
+            break
+    if not updated:
+        items.append(item)
+    save_all(items, db_path)
+    return item
 
 
-def get_perfume(pid: str) -> Optional[dict]:
-    """Fetch a single perfume by exact UUID."""
-    return next((p for p in list_perfumes() if p["id"] == pid), None)
+def delete(pid: str, path: Optional[Path] = None) -> bool:
+    """
+    Delete an item by id. Returns True if something was removed.
+    """
+    db_path = path or DEFAULT_DB
+    items = load_all(db_path)
+    new_items = [it for it in items if str(it.get("id")) != str(pid)]
+    removed = len(new_items) != len(items)
+    if removed:
+        save_all(new_items, db_path)
+    return removed
 
 
-def update_perfume(pid: str, **updates) -> bool:
-    """Update specific fields of a perfume by UUID and save the DB."""
-    db = load_db()
-    for i, p in enumerate(db["perfumes"]):
-        if p["id"] == pid:
-            p.update(updates)
-            db["perfumes"][i] = p
-            save_db(db)
-            return True
-    return False
+def search(
+    query: Optional[str] = None,
+    brand: Optional[str] = None,
+    notes_any: Optional[list[str]] = None,
+    price_max: Optional[float] = None,
+    path: Optional[Path] = None,
+) -> list[dict]:
+    """
+    Simple search across the catalog.
+    - query: substring match on name (case-insensitive)
+    - brand: exact (case-insensitive)
+    - notes_any: at least one note must match (case-insensitive)
+    - price_max: price <= price_max
+    """
+    items = load_all(path)
 
+    def norm(s: str) -> str:
+        return s.casefold()
 
-def delete_perfume(pid: str) -> bool:
-    """Remove a perfume by UUID and persist the change."""
-    db = load_db()
-    before = len(db["perfumes"])
-    db["perfumes"] = [p for p in db["perfumes"] if p["id"] != pid]
-    changed = len(db["perfumes"]) != before
-    if changed:
-        save_db(db)
-    return changed
+    results: list[dict] = []
+    for it in items:
+        name = str(it.get("name", ""))
+        it_brand = str(it.get("brand", ""))
+        it_notes = it.get("notes") or []
+        it_price = it.get("price")
 
-
-# ---------- Profiles ----------
-
-
-def add_profile(profile: UserProfile) -> None:
-    """Append a new user profile to the DB and save."""
-    db = load_db()
-    db["profiles"].append(asdict(profile))
-    save_db(db)
-
-
-def list_profiles() -> list[dict]:
-    """Return all user profiles from the DB."""
-    return load_db()["profiles"]
-
-
-def get_profile(pid: str) -> Optional[dict]:
-    """Fetch a single profile by exact UUID."""
-    return next((p for p in list_profiles() if p["id"] == pid), None)
-
-
-# ---------- CSV import/export ----------
-
-CSV_FIELDS = ["name", "brand", "price", "notes", "allergens", "rating", "stock"]
-
-
-def export_csv(path: str) -> int:
-    """Write the perfume collection to a CSV file and return the number of rows."""
-    perfumes = list_perfumes()
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
-        writer.writeheader()
-        for p in perfumes:
-            row = {k: p.get(k, "") for k in CSV_FIELDS}
-            # Join list fields into comma-separated strings for CSV
-            row["notes"] = ", ".join(p.get("notes", []))
-            row["allergens"] = ", ".join(p.get("allergens", []))
-            writer.writerow(row)
-    return len(perfumes)
-
-
-def import_csv(path: str) -> int:
-    """Read perfumes from a CSV and merge, skipping duplicates by (name, brand)."""
-    db = load_db()
-    existing = {(p["name"].strip().lower(), p["brand"].strip().lower()) for p in db["perfumes"]}
-    added = 0
-    with open(path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            key = (
-                row.get("name", "").strip().lower(),
-                row.get("brand", "").strip().lower(),
-            )
-            if key in existing:
-                continue  # Skip duplicates based on name+brand
-            p = Perfume.new(
-                name=row.get("name", ""),
-                brand=row.get("brand", ""),
-                price=float(row.get("price", 0) or 0),
-                notes=[n.strip() for n in (row.get("notes", "").split(",") if row.get("notes") else []) if n.strip()],
-                allergens=[
-                    a.strip()
-                    for a in (row.get("allergens", "").split(",") if row.get("allergens") else [])
-                    if a.strip()
-                ],
-                rating=float(row.get("rating") or 0) if row.get("rating") else None,
-                stock=int(row.get("stock", 0) or 0),
-            )
-            db["perfumes"].append(asdict(p))
-            existing.add(key)
-            added += 1
-    save_db(db)
-    return added
+        if query and norm(query) not in norm(name):
+            continue
+        if brand and norm(brand) != norm(it_brand):
+            continue
+        if notes_any:
+            s_notes = {norm(x) for x in it_notes if isinstance(x, str)}
+            if not any(norm(n) in s_notes for n in notes_any):
+                continue
+        if price_max is not None:
+            try:
+                p = float(it_price)
+            except (TypeError, ValueError):
+                continue
+            if p > float(price_max):
+                continue
+        results.append(it)
+    return results
