@@ -1,10 +1,6 @@
-# Black and Ruff configuration for consistent, linted code
-[tool.black]
-line-length = 120
-
 [tool.ruff]
-line-length = 120
-
-[tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "UP", "B"]
-ignore = []
+line-length = 100
+target-version = "py311"
+# Keep core rules; skip a few noisy style nits
+select = ["E","F","I","UP","N","B"]
+ignore = ["UP045","N814","B009"]
