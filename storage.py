@@ -140,11 +140,14 @@ def search(
         results.append(it)
     return results
 
+
 # --- Compatibility wrappers so existing app.py imports keep working ---
+
 
 def add_perfume(item: dict, path: Optional[Path] = None) -> dict:
     """Legacy name: insert a perfume (or update if id exists)."""
     return upsert(item, path)
+
 
 def update_perfume(pid: str, changes: dict, path: Optional[Path] = None) -> dict:
     """Legacy name: update by id with partial changes."""
@@ -154,17 +157,21 @@ def update_perfume(pid: str, changes: dict, path: Optional[Path] = None) -> dict
     merged = {**existing, **changes, "id": existing.get("id")}
     return upsert(merged, path)
 
+
 def delete_perfume(pid: str, path: Optional[Path] = None) -> bool:
     """Legacy name: delete by id."""
     return delete(pid, path)
+
 
 def get_perfume_by_id(pid: str, path: Optional[Path] = None) -> Optional[dict]:
     """Legacy name: fetch by id."""
     return get_by_id(pid, path)
 
+
 def list_perfumes(path: Optional[Path] = None) -> list[dict]:
     """Legacy name: list all perfumes."""
     return load_all(path)
+
 
 def search_perfumes(
     query: Optional[str] = None,
@@ -176,21 +183,26 @@ def search_perfumes(
     """Legacy name: search helper."""
     return search(query=query, brand=brand, notes_any=notes_any, price_max=price_max, path=path)
 
+
 # ===== Profile compatibility (separate JSON file) =====
 
 DEFAULT_PROFILES_DB = Path("profiles.json")
+
 
 def list_profiles(path: Optional[Path] = None) -> list[dict]:
     """Return all user profiles."""
     return load_all(path or DEFAULT_PROFILES_DB)
 
+
 def get_profile_by_id(uid: str, path: Optional[Path] = None) -> Optional[dict]:
     """Fetch a user profile by id."""
     return get_by_id(uid, path or DEFAULT_PROFILES_DB)
 
+
 def add_profile(profile: dict, path: Optional[Path] = None) -> dict:
     """Insert or update a user profile (must contain 'id')."""
     return upsert(profile, path or DEFAULT_PROFILES_DB)
+
 
 def update_profile(uid: str, changes: dict, path: Optional[Path] = None) -> dict:
     """Partial update to a profile by id."""
@@ -200,9 +212,11 @@ def update_profile(uid: str, changes: dict, path: Optional[Path] = None) -> dict
     merged = {**existing, **changes, "id": existing.get("id")}
     return upsert(merged, path or DEFAULT_PROFILES_DB)
 
+
 def delete_profile(uid: str, path: Optional[Path] = None) -> bool:
     """Delete a profile by id."""
     return delete(uid, path or DEFAULT_PROFILES_DB)
+
 
 # ===== CSV export (perfumes) =====
 def export_csv(csv_path, path: Optional[Path] = None) -> int:
@@ -240,3 +254,8 @@ def export_csv(csv_path, path: Optional[Path] = None) -> int:
             writer.writerow(row)
             written += 1
     return written
+
+# --- Alias for legacy import name expected by app.py ---
+def get_profile(uid: str, path: Optional[Path] = None):
+    """Legacy alias: get_profile -> get_profile_by_id."""
+    return get_profile_by_id(uid, path)
