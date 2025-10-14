@@ -203,3 +203,40 @@ def update_profile(uid: str, changes: dict, path: Optional[Path] = None) -> dict
 def delete_profile(uid: str, path: Optional[Path] = None) -> bool:
     """Delete a profile by id."""
     return delete(uid, path or DEFAULT_PROFILES_DB)
+
+# ===== CSV export (perfumes) =====
+def export_csv(csv_path, path: Optional[Path] = None) -> int:
+    """
+    Export the perfumes catalog to CSV.
+    - csv_path: destination file path (str or Path)
+    - path: optional JSON DB path (defaults to DEFAULT_DB)
+    Returns the number of rows written.
+    """
+    import csv
+    from pathlib import Path as _P
+
+    db_path = path or DEFAULT_DB
+    items = load_all(db_path)
+
+    # Determine CSV headers: union of keys across items, with sensible ordering
+    base_order = ["id", "name", "brand", "notes", "price"]
+    keys = set().union(*(it.keys() for it in items)) if items else set(base_order)
+    # Keep base_order first, then any extra keys
+    fieldnames = [k for k in base_order if k in keys] + [k for k in sorted(keys) if k not in base_order]
+
+    # Ensure parent directory exists
+    csv_path = _P(csv_path)
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+
+    written = 0
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for it in items:
+            row = dict(it)
+            # Flatten notes (list -> semicolon-separated string)
+            if isinstance(row.get("notes"), list):
+                row["notes"] = ";".join(map(str, row["notes"]))
+            writer.writerow(row)
+            written += 1
+    return written
