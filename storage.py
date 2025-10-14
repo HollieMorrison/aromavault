@@ -3,7 +3,7 @@ from dataclasses import asdict
 from pathlib import Path
 import csv
 import json
-from typing import dict, list, Optional
+from typing import Optional
 
 from models import Perfume, UserProfile
 
