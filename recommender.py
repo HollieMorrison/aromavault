@@ -1,4 +1,4 @@
-from typing import list, dict, tuple
+
 
 # Basic set-based similarities between notes.
 # Jaccard = |intersection| / |union|
