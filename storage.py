@@ -175,3 +175,31 @@ def search_perfumes(
 ) -> list[dict]:
     """Legacy name: search helper."""
     return search(query=query, brand=brand, notes_any=notes_any, price_max=price_max, path=path)
+
+# ===== Profile compatibility (separate JSON file) =====
+
+DEFAULT_PROFILES_DB = Path("profiles.json")
+
+def list_profiles(path: Optional[Path] = None) -> list[dict]:
+    """Return all user profiles."""
+    return load_all(path or DEFAULT_PROFILES_DB)
+
+def get_profile_by_id(uid: str, path: Optional[Path] = None) -> Optional[dict]:
+    """Fetch a user profile by id."""
+    return get_by_id(uid, path or DEFAULT_PROFILES_DB)
+
+def add_profile(profile: dict, path: Optional[Path] = None) -> dict:
+    """Insert or update a user profile (must contain 'id')."""
+    return upsert(profile, path or DEFAULT_PROFILES_DB)
+
+def update_profile(uid: str, changes: dict, path: Optional[Path] = None) -> dict:
+    """Partial update to a profile by id."""
+    existing = get_profile_by_id(uid, path)
+    if existing is None:
+        raise ValueError(f"Profile with id '{uid}' not found")
+    merged = {**existing, **changes, "id": existing.get("id")}
+    return upsert(merged, path or DEFAULT_PROFILES_DB)
+
+def delete_profile(uid: str, path: Optional[Path] = None) -> bool:
+    """Delete a profile by id."""
+    return delete(uid, path or DEFAULT_PROFILES_DB)
