@@ -156,11 +156,15 @@ def find(query: str = typer.Argument(..., help="Search name/brand")):
 
     q = query.lower()
 
-    def score(p: dict) -> int:
-        text = f"{p.get('name','')} {p.get('brand','')}".lower()
-        if HAVE_FUZZ:
+    def score(p):
+    text = f"{str(p.get('name', ''))} {str(p.get('brand', ''))}".lower()
+    if HAVE_FUZZ:
+        try:
             return int(fuzz.partial_ratio(q, text))
-        return 100 if q in text else (50 if any(w in text for w in q.split()) else 0)
+        except Exception:
+            return 0
+    return 100 if q in text else (50 if any(w in text for w in q.split()) else 0)
+
 
     ranked = sorted(((p, score(p)) for p in perfumes), key=lambda t: t[1], reverse=True)
     top = [t for t in ranked if t[1] > 0][:10]
