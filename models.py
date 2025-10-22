@@ -2,6 +2,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Optional
 
+# changed from typing import list, optional delete list.
+
 
 # Dataclass for a perfume record stored in our JSON database
 @dataclass
