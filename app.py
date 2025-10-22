@@ -1,8 +1,10 @@
 # Main entry for my aromavault CLI application.
 # Uses Typer to manage commands and Rich to make outputs look better.
+
 """AromaVault CLI."""
 
 import sys
+from dataclasses import asdict
 from typing import Optional
 
 import typer
@@ -37,7 +39,7 @@ app = typer.Typer(add_completion=False)
 console = Console()
 
 
-@app.command()
+@app.command("add-perf")
 def add_perf(
     name: str = typer.Argument(..., help="Perfume name"),
     brand: str = typer.Option(..., "--brand", prompt=True),
@@ -57,11 +59,12 @@ def add_perf(
         rating=rating,
         stock=stock,
     )
-    add_perfume(p)
+    # storage expects a dict-like item; convert dataclass -> dict
+    add_perfume(asdict(p))
     info(f"Added: {p.name} by {p.brand} ({human_money(p.price)})")
 
 
-@app.command()
+@app.command("list-perfumes-cmd")
 def list_perfumes_cmd(
     brand: Optional[str] = typer.Option(None, "--brand"),
     note: Optional[str] = typer.Option(None, "--note"),
@@ -72,7 +75,7 @@ def list_perfumes_cmd(
 
     # Apply optional filters from the CLI
     if brand:
-        perfumes = [p for p in perfumes if p["brand"].lower() == brand.lower()]
+        perfumes = [p for p in perfumes if p.get("brand", "").lower() == brand.lower()]
     if note:
         note_l = note.lower()
         perfumes = [
@@ -93,7 +96,6 @@ def list_perfumes_cmd(
             )
         )
     )
-
     perfumes.sort(key=key)
 
     # Build a table with Rich
@@ -109,7 +111,7 @@ def list_perfumes_cmd(
 
     for p in perfumes:
         table.add_row(
-            p["id"][:8],
+            p.get("id", "")[:8],
             p.get("name", ""),
             p.get("brand", ""),
             human_money(p.get("price", 0.0)),
@@ -145,6 +147,7 @@ def find(query: str = typer.Argument(..., help="Search name/brand")):
     table.add_column("Name")
     table.add_column("Brand")
     table.add_column("Price")
+
     for p, sc in top:
         table.add_row(
             str(sc),
@@ -152,6 +155,7 @@ def find(query: str = typer.Argument(..., help="Search name/brand")):
             p.get("brand", ""),
             human_money(p.get("price", 0.0)),
         )
+
     console.print(table)
 
 
@@ -159,10 +163,12 @@ def find(query: str = typer.Argument(..., help="Search name/brand")):
 def update(
     pid: str = typer.Argument(..., help="Perfume ID (first 8 chars accepted)"),
     field: str = typer.Argument(
-        ..., help="Field: name|brand|price|notes|allergens|rating|stock"
+        ...,
+        help="Field: name|brand|price|notes|allergens|rating|stock",
     ),
     value: str = typer.Argument(
-        ..., help="New value (comma-separated for notes/allergens)"
+        ...,
+        help="New value (comma-separated for notes/allergens)",
     ),
 ):
     """Update a perfume field by ID."""
@@ -189,7 +195,8 @@ def update(
     else:
         return error("Unknown field.")
 
-    ok = update_perfume(full, **updates)  # <-- you had 'updated_perfume'
+    # storage.update_perfume expects (pid, changes_dict)
+    ok = update_perfume(full, updates)
     if ok:
         info("Updated successfully.")
     else:
@@ -208,7 +215,7 @@ def remove(pid: str):
         error("Delete perfume failed.")
 
 
-@app.command()
+@app.command("add-profile-cmd")
 def add_profile_cmd(
     name: str = typer.Argument(...),
     preferred_notes: str = typer.Option("", "--preferred", help="Comma-separated"),
@@ -220,7 +227,8 @@ def add_profile_cmd(
         preferred_notes=parse_csv_list(preferred_notes),
         avoid_allergens=parse_csv_list(avoid_allergens),
     )
-    add_profile(profile)
+    # storage expects a dict
+    add_profile(asdict(profile))
     info(f"Profile created: {profile.name}")
 
 
@@ -235,7 +243,7 @@ def list_profiles_cmd():
     table.add_column("Avoid Allergens")
     for pr in profiles:
         table.add_row(
-            pr["id"][:8],
+            pr.get("id", "")[:8],
             pr.get("name", ""),
             ", ".join(pr.get("preferred_notes", [])),
             ", ".join(pr.get("avoid_allergens", [])),
@@ -243,9 +251,9 @@ def list_profiles_cmd():
     console.print(table)
 
 
-@app.command()
+@app.command("recommend-cmd")
 def recommend_cmd(
-    profile_id: Optional[str] = typer.Option(None, "--profile"),
+    profile_id: Optional[str] = typer.Option(None, "--profile", "--profile-id"),
     preferred_notes: str = typer.Option("", "--preferred"),
     avoid_allergens: str = typer.Option("", "--avoid"),
     top_k: int = typer.Option(5, "--top"),
@@ -276,6 +284,7 @@ def recommend_cmd(
     table.add_column("Brand")
     table.add_column("Notes")
     table.add_column("Price")
+
     for p, sc in ranked:
         table.add_row(
             f"{sc:.2f}",
@@ -287,21 +296,21 @@ def recommend_cmd(
     console.print(table)
 
 
-@app.command()
+@app.command("export-csv-cmd")
 def export_csv_cmd(path: str = typer.Argument(...)):
     """Export all perfumes to CSV at PATH."""
     count = export_csv(path)
     info(f"Exported {count} rows to {path}")
 
 
-@app.command()
+@app.command("import-csv-cmd")
 def import_csv_cmd(path: str = typer.Argument(...)):
     """Import perfumes from CSV at PATH (merges by name+brand)."""
     added = import_csv(path)
     info(f"Imported {added} new perfumes from {path}")
 
 
-@app.command()
+@app.command("seed-minimal")
 def seed_minimal():
     """Load a minimal dataset for testing."""
     # Protect against duplicate seeding by checking if DB already has items
@@ -338,8 +347,9 @@ def seed_minimal():
             stock=7,
         ),
     ]
+
     for s in samples:
-        add_perfume(s)
+        add_perfume(asdict(s))
     info("Seeded 3 perfumes.")
 
 
@@ -347,7 +357,7 @@ def _resolve_id(short_id: str) -> Optional[str]:
     """Helper to map a short 8-char prefix to the full UUID stored in JSON."""
     short = short_id.lower()
     for p in list_perfumes():
-        if p["id"].startswith(short):
+        if p.get("id", "").startswith(short):
             return p["id"]
     return None
 
@@ -356,7 +366,7 @@ def _resolve_profile_id(short_id: str) -> Optional[str]:
     """Same as _resolve_id but for user profiles."""
     short = short_id.lower()
     for pr in list_profiles():
-        if pr["id"].startswith(short):
+        if pr.get("id", "").startswith(short):
             return pr["id"]
     return None
 
