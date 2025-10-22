@@ -1,6 +1,7 @@
 from typer.testing import CliRunner
 
-import app as cli_app
+import run as cli_app
+
 import storage
 
 runner = CliRunner()
