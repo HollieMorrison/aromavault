@@ -126,17 +126,40 @@ def list_perfumes_cmd(
 
 @app.command()
 def find(query: str = typer.Argument(..., help="Search name/brand")):
-    """Fuzzy search across name and brand."""
-    perfumes = list_perfumes()
+    """Fuzzy search across name and brand (defensive against bad data)."""
+    raw = list_perfumes()
+
+    # Normalise & filter out any malformed records to avoid TypeError, etc.
+    perfumes: list[dict] = []
+    for p in raw:
+        if not isinstance(p, dict):
+            continue
+        name = str(p.get("name", "") or "")
+        brand = str(p.get("brand", "") or "")
+        try:
+            price = float(p.get("price", 0) or 0)
+        except (TypeError, ValueError):
+            price = 0.0
+        notes = p.get("notes") or []
+        if not isinstance(notes, list):
+            notes = [str(notes)]
+
+        perfumes.append(
+            {
+                "id": str(p.get("id", "") or ""),
+                "name": name,
+                "brand": brand,
+                "price": price,
+                "notes": [str(n) for n in notes],
+            }
+        )
+
     q = query.lower()
 
-    def score(p):
-        text = f"{p.get('name', '')} {p.get('brand', '')}".lower()
+    def score(p: dict) -> int:
+        text = f"{p.get('name','')} {p.get('brand','')}".lower()
         if HAVE_FUZZ:
-            # You can add more scorers if you like; one is fine too.
-            return max(
-                fuzz.partial_ratio(q, text),
-            )
+            return int(fuzz.partial_ratio(q, text))
         return 100 if q in text else (50 if any(w in text for w in q.split()) else 0)
 
     ranked = sorted(((p, score(p)) for p in perfumes), key=lambda t: t[1], reverse=True)
