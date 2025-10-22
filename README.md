@@ -1,122 +1,235 @@
-# AromaVault — Python CLI
+# AromaVault
 
-AromaVault is a command-line app where you can **manage a small perfume dataset** and get **practical recommendations** based on notes, brand bias, and budget. It keeps things simple and easy to use so anyone can add, search, and export their collection without fuss.
+AromaVault is a simple command-line app made to help people manage and explore different perfumes.  
+You can add perfumes, see them listed, search by name or brand, and even get recommendations based on what you like.  
 
-![CLI preview](./docs/readme/cli-preview.png)  
-[View AromaVault GitHub Repository](https://github.com/HollieMorrison/aromavault)
+
+
+[View the live Heroku app here](https://aromavault.herokuapp.com)   XXXX
 
 ---
 
-## Table of contents :
+## Table of contents
 
-### [User Experience (UX)](#user-experience-ux-1)
+### [User Experience (UX)](#user-experience-ux)
 * [User Stories](#user-stories)
 ### [Features](#features)
-* [Existing Features](#existing-features)
-* [Features Left To Implement](#features-left-to-implement-1)
-### [Design](#design-1)
-### [Technologies Used](#technologies-used-1)
-### [Frameworks, Libraries & Programs Used](#frameworks-libraries--programs-used-1)
-### [Testing](#testing-1)
-* [Validation Results](#validation-results)
+* [Current Features](#current-features)
+* [Future Features](#future-features)
+### [Design](#design)
+### [Technologies Used](#technologies-used)
+### [Frameworks, Libraries & Programs Used](#frameworks-libraries--programs-used)
+### [Testing](#testing)
+* [Automated Testing](#automated-testing)
 * [Manual Testing](#manual-testing)
-* [Lighthouse Report](#lighthouse-report)
-### [Deployment and local development](#deployment-and-local-development-1)
-* [Heroku](#heroku)
-* [Forking the GitHub Repository](#forking-the-github-repository)
-* [Local Clone](#local-clone)
-### [Credits](#credits-1)
-### [Acknowledgements](#acknowledgements-1)
+* [Testing Results](#testing-results)
+* [Validation](#validation)
+### [Deployment and Local Development](#deployment-and-local-development)
+* [Heroku Deployment](#heroku-deployment)
+* [Forking the Repository](#forking-the-repository)
+* [Cloning Locally](#cloning-locally)
+### [Credits](#credits)
+### [Acknowledgements](#acknowledgements)
+### [Learning Outcomes Alignment](#learning-outcomes-alignment)
 
 ---
 
 ## User Experience (UX)
 
-This project is aimed at perfume lovers and beginners who want a **fast, text-based tool** to store perfume details, **search/filter** by notes or brand, and get **simple recommendations** without needing a database or website.
+AromaVault was made to be simple, useful, and clear for anyone who likes perfumes or just wants to manage a collection.  
+It shows clear messages and tables in colour, using the Rich library, to make the command-line more friendly.
 
-AromaVault writes to local JSON files by default, and can **import/export CSV**, making it easy to move data in and out.
+---
 
 ### User Stories
 
-*First-time user goals*
-  * Understand what the tool does and how to run it from the terminal.
-  * Add a new perfume with basic fields (name, brand, notes, price).
-  * See a list of perfumes and search by notes or brand.
-  * Export data to CSV for use elsewhere.
+**First**-time users
+- Want to know what the app does and how to use it.
+- Want to add a perfume easily.
+- Want to search perfumes by name or brand.
 
-*Returning user goals*
-  * Update price or notes on an existing item.
-  * Import a CSV file of items and avoid manual entry.
-  * Create a simple **profile** and get **recommendations** within a budget.
+**Returning users**
+- Want to update or remove perfumes.
+- Want to save their scent preferences.
+- Want recommendations based on their profile.
 
-- - -
+**Admin or tester**
+- Want to import and export perfume data.
+- Want to check that the app runs and works fine on Heroku.
+
+---
 
 ## Features
 
-### Existing Features
+### Current Features
 
-* **Add / Update / Delete** perfumes  
-* **List** and **Search** (brand, notes, price cap)  
-* **Import CSV / Export CSV** (ids supported for upsert)  
-* **Profiles**: store preferences (preferred/avoid notes, brand bias, price_max)  
-* **Recommend**: a tiny, deterministic scoring to return top-k matches  
-* **Friendly errors** and safe file I/O (no crashes on missing files)  
-* **Typer CLI** with `--help` on every command
+* **Add a perfume**
+![Add Perfume](./assets/p3-add-perf-working.png)
+  - Add name, brand, price, and scent notes.
+  ```bash
+  python app.py add-perf "Rose Dusk" --brand "Floral" --price 55 --notes rose,musk
 
-> Notes are passed as a comma-separated list, e.g., `--notes citrus,green`.
 
-Example screenshots:
+**List perfumes**
+![List of perfumes](./assets/p3-list-perfumes-cmd.png)
+![List of perfumes](./assets/p3-list-perfumes-working.png)
+See all perfumes in a nice table.
+python app.py list-perfumes-cmd
 
-![Help output](./docs/readme/help.png)  
-![Search output](./docs/readme/search.png)  
-![Export success](./docs/readme/export.png)
 
-### Features Left To Implement
+**Find perfumes**
+Search perfumes quickly with fuzzy matching.
+python app.py find "rose"
 
-* Optional fuzzy search toggle and better ranking explanations  
-* More advanced profile fields (season, longevity, occasion)  
-* CSV schema validation with a helpful report
 
----
+**Update or remove perfumes**
+![Update perfume details](./assets/p3-update-name-working.png)
+![Remove perfume from list](./assets/p3-delete-working.png)
+Change perfume details or delete by ID.
+python app.py update 4d9ac909 price 59
+python app.py remove 4d9ac909
 
-## Design
 
-* **Simple, readable CLI** output using sensible defaults.  
-* **Minimal data model**:
-  * Perfume: `id`, `name`, `brand`, `notes` (list of strings), `price` (number).
-  * Profile: `id`, `preferred_notes`, `avoid_notes`, `brand_bias`, `price_max`.
+Add user profiles
+Save what scents someone likes or dislikes.
+python app.py add-profile-cmd "Hollie" --preferred rose,musk --avoid linalool
+Get recommendations
+Suggests perfumes based on a user’s saved profile.
+python app.py recommend-cmd --profile <PROFILE_ID>
 
----
+Export and import
+Save all perfumes to a CSV or import from one.
+![Import CSV](./assets/p3-import-csv-working.png)
+![Export CSV](./assets/p3-export-csv-cmd-working.png)
+python app.py export-csv-cmd perfumes.csv
 
-## Technologies Used
+Seed data
+Quickly add three demo perfumes for testing.
+![Seed tests](./assets/p3-seeded-perfumes-works.png)
+python app.py seed-minimal
 
-* [Python 3.11](https://www.python.org/)
-* [Typer](https://typer.tiangolo.com/) (CLI)
-* [Rich](https://rich.readthedocs.io/) (nicer console tables)
-* [Pytest](https://docs.pytest.org/) (tests)
 
----
+Future Features
+Add a user rating system.
 
-## Frameworks, Libraries & Programs Used
+Let users sort by price range or scent family.
 
-* [GitHub](https://github.com/)  
-  * Version control, CI, and repo hosting.
-* [GitHub Actions](https://github.com/features/actions)  
-  * CI to lint, format, and run tests.
-* [Visual Studio Code](https://code.visualstudio.com/)  
-  * Local development.
+Add small dashboard showing totals and averages.
 
----
+Allow multiple users to store their own data.
 
-## Testing
+Design
+The app keeps a clean look in the terminal with colour and layout from the Rich library.
+It uses simple data storage in JSON so it’s quick and easy to work with.
+The code is split into parts for clarity:
 
-Automated tests verify a few CLI behaviors and basic storage/recommendation logic. Manual tests confirm friendly error messages and CSV flows.
+app.py – main CLI file
 
-Run locally:
+models.py – perfume and user profile data
 
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-ruff check . --fix
-black --check .
-pytest -q
+storage.py – save, load, and update data
+
+utils.py – helper functions
+
+Technologies Used
+Python 3
+
+Typer
+
+Rich
+
+RapidFuzz
+
+Pytest
+
+Ruff
+
+Frameworks, Libraries & Programs Used
+GitHub – version control
+
+Heroku – deployment
+
+Visual Studio Code – IDE
+
+Rich – for colourful output
+
+Typer – for easy CLI commands
+
+RapidFuzz – for fuzzy search
+
+Testing
+Automated Testing
+![Pytest results](./assets/p3-pytest-all-passed.png)
+![Pytest results](./assets/p3-pytest-v-visual-results.png)
+Test file	What it checks	Result
+tests/test_models.py	Perfume and profile creation	✅ Passed
+tests/test_storage.py	Save, read, and delete functions	✅ Passed
+tests/test_cli.py	CLI commands like add, list, find	✅ Passed
+tests/test_utils.py	Helper functions	✅ Passed
+
+All tests passed locally and on GitHub Actions.
+
+Manual Testing
+What was tested	Command	Expected outcome	Result
+Add perfume	python app.py add-perf "Rose Dusk" --brand "Floral" --price 55 --notes rose,musk	Shows confirmation message	✅
+List perfumes	python app.py list-perfumes-cmd	Displays all perfumes	✅
+Search perfumes	python app.py find "rose"	Finds “Rose Dusk”	✅
+Update perfume	python app.py update 4d9ac909 price 59	Confirms update	✅
+Remove perfume	python app.py remove 4d9ac909	Confirms delete	✅
+Export data	python app.py export-csv-cmd data.csv	Saves CSV file	✅
+Import data	python app.py import-csv-cmd data.csv	Imports file	✅
+Add profile	python app.py add-profile-cmd "Hollie" --preferred rose,musk --avoid linalool	Creates profile	✅
+Recommend	python app.py recommend-cmd --profile <PROFILE_ID>	Shows recommendations	✅
+
+Testing Results
+<details> <summary>✅ Seed Minimal Test</summary>
+
+</details> <details> <summary>✅ List Perfumes Output</summary>
+
+</details> <details> <summary>✅ Search Result Example</summary>
+
+</details> <details> <summary>✅ Recommendations Output</summary>
+
+</details>
+Validation
+Code Style: Checked with Ruff – no major issues found.
+
+
+Testing: pytest used to confirm all functions work correctly.
+
+Deployment: Tested successfully on Heroku with heroku run bash.
+
+Error Handling: All commands handle wrong inputs clearly with helpful messages.
+
+
+Open the terminal:
+
+heroku run bash -a aromavault
+python app.py --help
+Forking the Repository
+Go to the GitHub repo AromaVault.
+
+Click Fork in the top right corner.
+
+This makes a copy under your own account.
+
+Cloning Locally
+On GitHub, click the green Code button.
+
+Copy the HTTPS link.
+
+In your terminal:
+
+
+git clone https://github.com/HollieMorrison/aromavault.git
+Create and activate a virtual environment:
+
+Media
+Screenshots created by Hollie Morrison.
+
+Acknowledgements
+Thanks to my mentor for feedback and advice.
+
+The Code Institute Slack community for answering questions and helping me fix issues.
+
+Friends and family for testing the app and giving honest feedback.

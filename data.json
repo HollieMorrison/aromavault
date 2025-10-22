@@ -1,0 +1,43 @@
+[
+  {
+    "id": "51972348-6810-4cea-9840-9e0ac2c375fa",
+    "name": "Woodland Trail",
+    "brand": "Earth&Oak",
+    "price": 79.0,
+    "notes": [
+      "oakmoss",
+      "cedar",
+      "vetiver"
+    ],
+    "allergens": "['oakmoss']",
+    "rating": "4.6",
+    "stock": "4"
+  },
+  {
+    "id": "c657aed6-454a-4bbb-b045-68a2357c6002",
+    "name": "Night Bloom XL",
+    "brand": "Nocturne",
+    "price": 65.0,
+    "notes": [
+      "jasmine",
+      "amber",
+      "musk"
+    ],
+    "allergens": "['coumarin']",
+    "rating": "4.4",
+    "stock": "7"
+  },
+  {
+    "id": "f8ef47ea-6e1c-4287-b3b0-bfce30fd18de",
+    "name": "Rose Dusk",
+    "brand": "Floral",
+    "price": 55.0,
+    "notes": [
+      "rose",
+      "musk"
+    ],
+    "allergens": "[]",
+    "rating": "",
+    "stock": "0"
+  }
+]

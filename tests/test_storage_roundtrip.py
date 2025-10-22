@@ -1,6 +1,7 @@
 from dataclasses import asdict
-from models import Perfume
+
 import storage
+from models import Perfume
 
 
 def test_add_list_update_delete_roundtrip(tmp_path, monkeypatch):
