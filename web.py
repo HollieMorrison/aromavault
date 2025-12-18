@@ -3,7 +3,6 @@ from flask import Flask, request, jsonify, Response
 import json
 import typing as t
 
-# Reuse your existing domain logic
 import storage
 import recommender
 
@@ -26,33 +25,32 @@ HOMEPAGE = """<!doctype html>
     code { background: rgba(127,127,127,.15); padding:.1rem .3rem; border-radius:.3rem; }
     .muted { opacity:.7; }
     .grid { display:grid; gap:.75rem; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); }
-    .footer { margin-top:2rem; font-size:.9rem; opacity:.8; }
     a.button { display:inline-block; padding:.5rem .8rem; border:1px solid #888; border-radius:.5rem; text-decoration:none; margin-right:.5rem;}
   </style>
 </head>
 <body>
 <main>
-  <h1>AromaVault</h1>
-  <p class="muted">Simple dataset manager for perfumes. Use the quick links or the forms below.</p>
+  <h1>Welcome to AromaVault</h1>
+  <p class="muted">Browse perfumes, search the catalogue, or get quick recommendations.</p>
 
   <div class="card">
-    <h2>Quick Links</h2>
+    <h2>Quick actions</h2>
     <p>
-      <a class="button" href="/perfumes">View perfumes (HTML)</a>
-      <a class="button" href="/api/perfumes?pretty=1">Perfumes (pretty JSON)</a>
+      <a class="button" href="/perfumes">Browse perfumes</a>
+      <a class="button" href="/api/perfumes?pretty=1">Perfumes (readable JSON)</a>
       <a class="button" href="/api/perfumes">Perfumes (raw JSON)</a>
-      <a class="button" href="/api/health">Health</a>
+      <a class="button" href="/api/health">Service health</a>
     </p>
   </div>
 
   <div class="card">
-    <h2>Search</h2>
+    <h2>Find perfumes</h2>
     <form action="/api/search" method="get">
       <div class="grid">
-        <label>Query <input name="query" placeholder="e.g. vanilla"></label>
+        <label>Keyword <input name="query" placeholder="e.g. vanilla, citrus"></label>
         <label>Brand <input name="brand" placeholder="e.g. Dior"></label>
-        <label>Notes (any, comma separated) <input name="notes_any" placeholder="vanilla,jasmine"></label>
-        <label>Max Price <input name="price_max" placeholder="80"></label>
+        <label>Has any of these notes <input name="notes_any" placeholder="vanilla,jasmine"></label>
+        <label>Maximum price (£) <input name="price_max" placeholder="80"></label>
       </div>
       <button type="submit">Search (JSON)</button>
       <p class="muted">Tip: add <code>?pretty=1</code> to the URL for readable JSON.</p>
@@ -60,22 +58,18 @@ HOMEPAGE = """<!doctype html>
   </div>
 
   <div class="card">
-    <h2>Recommend</h2>
+    <h2>Get recommendations</h2>
     <form action="/api/recommend" method="get">
       <div class="grid">
-        <label>Preferred notes <input name="preferred_notes" placeholder="vanilla,jasmine"></label>
-        <label>Avoid notes <input name="avoid_notes" placeholder="oud,patchouli"></label>
-        <label>Brand bias <input name="brand_bias" placeholder="Dior"></label>
-        <label>Max Price <input name="price_max" placeholder="70"></label>
-        <label>K (results) <input name="k" placeholder="5"></label>
+        <label>Notes you like <input name="preferred_notes" placeholder="vanilla,jasmine"></label>
+        <label>Notes to avoid <input name="avoid_notes" placeholder="oud,patchouli"></label>
+        <label>Prefer this brand <input name="brand_bias" placeholder="Dior"></label>
+        <label>Maximum price (£) <input name="price_max" placeholder="70"></label>
+        <label>How many results? <input name="k" placeholder="5"></label>
       </div>
       <button type="submit">Recommend (JSON)</button>
       <p class="muted">Tip: add <code>?pretty=1</code> to the URL for readable JSON.</p>
     </form>
-  </div>
-
-  <div class="footer">
-    <p>Programmatic usage: <code>GET /api/search</code>, <code>GET /api/recommend</code>. See README for examples.</p>
   </div>
 </main>
 </body>
@@ -126,20 +120,20 @@ def perfumes_html():
               <div class="title">{p.get('name','(no name)')}</div>
               <div class="muted">{p.get('brand','')}</div>
             </div>
-            <div class="row">Price: £{p.get('price','')}</div>
-            <div class="row">Rating: {p.get('rating','')}</div>
-            <div class="row">Stock: {p.get('stock','')}</div>
-            <div class="row">Notes: {notes or '<span class="muted">(none)</span>'}</div>
-            <div class="row">Allergens: {allergens or '<span class="muted">(none)</span>'}</div>
+            <div class="row">Price (GBP): £{p.get('price','')}</div>
+            <div class="row">Customer rating: {p.get('rating','')}</div>
+            <div class="row">In stock: {p.get('stock','')}</div>
+            <div class="row">Fragrance notes: {notes or '<span class="muted">(none)</span>'}</div>
+            <div class="row">Allergen warnings: {allergens or '<span class="muted">(none)</span>'}</div>
             <div class="row muted">ID: {p.get('id','')}</div>
           </div>
         """)
 
     html = f"""<!doctype html>
-<html><head><meta charset="utf-8"/><title>AromaVault – Perfumes</title>{css}</head>
+<html><head><meta charset="utf-8"/><title>AromaVault – Perfume Catalogue</title>{css}</head>
 <body><main>
-  <h1>Perfumes</h1>
-  <p class="muted"><a href="/">← Back</a> • Also available as JSON: <a href="/api/perfumes?pretty=1">/api/perfumes?pretty=1</a></p>
+  <h1>Perfume Catalogue</h1>
+  <p class="muted"><a href="/">← Back to home</a> • Also available as JSON: <a href="/api/perfumes?pretty=1">/api/perfumes?pretty=1</a></p>
   <div class="grid">
     {''.join(cards)}
   </div>
