@@ -1,270 +1,283 @@
-<<<<<<< HEAD
-# AromaVault
+# AromaVault — Simple Perfume Recommender & Catalog (CLI + API)
 
-AromaVault is a simple command-line app made to help people manage and explore different perfumes.  
-You can add perfumes, see them listed, search by name or brand, and even get recommendations based on what you like.  
+AromaVault helps you explore a small perfume catalog, search by notes/brand/price, and get simple recommendations.  
+It exposes a **friendly web page** and **readable API endpoints** on Heroku, and includes a **Typer-based CLI** for one-off admin tasks.
 
-
-
-[View the live Heroku app here](https://aromavault.herokuapp.com)   XXXX
+![Am I responsive](./assets/readme/am-i-responsive-image.png)  
+[**View the live AromaVault project here**](https://aromavault-eu-e54dae1bad1f.herokuapp.com/)
 
 ---
 
-## Table of contents
+## Table of contents :
 
-### [User Experience (UX)](#user-experience-ux)
+### [User Experience (UX)](#user-experience-ux-1)
 * [User Stories](#user-stories)
+
 ### [Features](#features)
-* [Current Features](#current-features)
-* [Future Features](#future-features)
-### [Design](#design)
-### [Technologies Used](#technologies-used)
-### [Frameworks, Libraries & Programs Used](#frameworks-libraries--programs-used)
-### [Testing](#testing)
-* [Automated Testing](#automated-testing)
+* [Existing Features](#existing-features)
+
+### [Features Left To Implement](#features-left-to-implement-1)
+
+### [Design](#design-1)
+
+### [Technologies Used](#technologies-used-1)
+
+### [Frameworks, Libraries & Programs Used](#frameworks-libraries-programs-used-1)
+
+### [Testing](#testing-1)
+* [Validation Results](#validation-results)
 * [Manual Testing](#manual-testing)
-* [Testing Results](#testing-results)
-* [Validation](#validation)
-### [Deployment and Local Development](#deployment-and-local-development)
-* [Heroku Deployment](#heroku-deployment)
-* [Forking the Repository](#forking-the-repository)
-* [Cloning Locally](#cloning-locally)
-### [Credits](#credits)
-### [Acknowledgements](#acknowledgements)
-### [Learning Outcomes Alignment](#learning-outcomes-alignment)
+* [Lighthouse Report](#lighthouse-report)
+
+### [Deployment and local development](#deployment-and-local-development-1)
+* [Heroku](#heroku)
+* [Forking the GitHub Repository](#forking-the-github-repository)
+* [Local Clone](#local-clone)
+* [Running the CLI (one-off)](#running-the-cli-one-off)
+
+### [Bug Fix Log (3 issues + resolutions)](#bug-fix-log-3-issues--resolutions-1)
+
+### [Credits](#credits-1)
+
+### [Acknowledgements](#acknowledgements-1)
 
 ---
 
 ## User Experience (UX)
 
-AromaVault was made to be simple, useful, and clear for anyone who likes perfumes or just wants to manage a collection.  
-It shows clear messages and tables in colour, using the Rich library, to make the command-line more friendly.
+AromaVault is for users who want a **simple way to browse perfumes** by notes (e.g., rose, vanilla), filter by price, and get **quick recommendations**.
 
----
+There is a clear homepage on Heroku with links to both **HTML** and **JSON** views.
 
 ### User Stories
 
-**First**-time users
-- Want to know what the app does and how to use it.
-- Want to add a perfume easily.
-- Want to search perfumes by name or brand.
-
-**Returning users**
-- Want to update or remove perfumes.
-- Want to save their scent preferences.
-- Want recommendations based on their profile.
-
-**Admin or tester**
-- Want to import and export perfume data.
-- Want to check that the app runs and works fine on Heroku.
+*First-time visitor goals*
+- Understand the main purpose of the app (browse/search perfumes and get recommendations).
+- Navigate quickly from the homepage to a readable list of perfumes.
+- Use a simple search (`/api/search?query=rose&price_max=80`) to find options.
+- Get basic recommendations (`/api/recommend?preferred=rose,vanilla`).
 
 ---
 
 ## Features
 
-### Current Features
+### Existing Features
 
-* **Add a perfume**
-![Add Perfume](./assets/p3-add-perf-working.png)
-  - Add name, brand, price, and scent notes.
-  ```bash
-  python app.py add-perf "Rose Dusk" --brand "Floral" --price 55 --notes rose,musk
+- **Homepage** with quick links:
+  - `/perfumes` — readable HTML table of the catalog  
+  - `/api/perfumes?pretty=1` — the same data in formatted JSON  
+  - `/api/search?query=...&brand=...&price_max=...` — filter results  
+  - `/api/recommend?preferred=note1,note2&avoid=...&price_max=...` — simple scoring based on notes/price  
+  - `/api/health` — health check (returns JSON `{status:"ok"}`)
 
+- **Readable JSON**: add `?pretty=1` to any API endpoint for nicely formatted output.
 
-**List perfumes**
-![List of perfumes](./assets/p3-list-perfumes-cmd.png)
-![List of perfumes](./assets/p3-list-perfumes-working.png)
-See all perfumes in a nice table.
-python app.py list-perfumes-cmd
+- **Typer CLI (one-off on Heroku)**:
+  - `hello` smoke test (`heroku run python run.py hello --name Hollie --app <app>`).
+  - Structure is in place to add more admin commands (import/export, seeding, etc).
 
+- **Data storage**: JSON dataset with a small sample perfume catalog.
 
-**Find perfumes**
-Search perfumes quickly with fuzzy matching.
-python app.py find "rose"
-
-
-**Update or remove perfumes**
-![Update perfume details](./assets/p3-update-name-working.png)
-![Remove perfume from list](./assets/p3-delete-working.png)
-Change perfume details or delete by ID.
-python app.py update 4d9ac909 price 59
-python app.py remove 4d9ac909
-
-
-Add user profiles
-Save what scents someone likes or dislikes.
-python app.py add-profile-cmd "Hollie" --preferred rose,musk --avoid linalool
-Get recommendations
-Suggests perfumes based on a user’s saved profile.
-python app.py recommend-cmd --profile <PROFILE_ID>
-
-Export and import
-Save all perfumes to a CSV or import from one.
-![Import CSV](./assets/p3-import-csv-working.png)
-![Export CSV](./assets/p3-export-csv-cmd-working.png)
-python app.py export-csv-cmd perfumes.csv
-
-Seed data
-Quickly add three demo perfumes for testing.
-![Seed tests](./assets/p3-seeded-perfumes-works.png)
-python app.py seed-minimal
-
-
-Future Features
-Add a user rating system.
-
-Let users sort by price range or scent family.
-
-Add small dashboard showing totals and averages.
-
-Allow multiple users to store their own data.
-
-Design
-The app keeps a clean look in the terminal with colour and layout from the Rich library.
-It uses simple data storage in JSON so it’s quick and easy to work with.
-The code is split into parts for clarity:
-
-app.py – main CLI file
-
-models.py – perfume and user profile data
-
-storage.py – save, load, and update data
-
-utils.py – helper functions
-
-Technologies Used
-Python 3
-
-Typer
-
-Rich
-
-RapidFuzz
-
-Pytest
-
-Ruff
-
-Frameworks, Libraries & Programs Used
-GitHub – version control
-
-Heroku – deployment
-
-Visual Studio Code – IDE
-
-Rich – for colourful output
-
-Typer – for easy CLI commands
-
-RapidFuzz – for fuzzy search
-
-Testing
-Automated Testing
-![Pytest results](./assets/p3-pytest-all-passed.png)
-![Pytest results](./assets/p3-pytest-v-visual-results.png)
-Test file	What it checks	Result
-tests/test_models.py	Perfume and profile creation	✅ Passed
-tests/test_storage.py	Save, read, and delete functions	✅ Passed
-tests/test_cli.py	CLI commands like add, list, find	✅ Passed
-tests/test_utils.py	Helper functions	✅ Passed
-
-All tests passed locally and on GitHub Actions.
-
-Manual Testing
-What was tested	Command	Expected outcome	Result
-Add perfume	python app.py add-perf "Rose Dusk" --brand "Floral" --price 55 --notes rose,musk	Shows confirmation message	✅
-List perfumes	python app.py list-perfumes-cmd	Displays all perfumes	✅
-Search perfumes	python app.py find "rose"	Finds “Rose Dusk”	✅
-Update perfume	python app.py update 4d9ac909 price 59	Confirms update	✅
-Remove perfume	python app.py remove 4d9ac909	Confirms delete	✅
-Export data	python app.py export-csv-cmd data.csv	Saves CSV file	✅
-Import data	python app.py import-csv-cmd data.csv	Imports file	✅
-Add profile	python app.py add-profile-cmd "Hollie" --preferred rose,musk --avoid linalool	Creates profile	✅
-Recommend	python app.py recommend-cmd --profile <PROFILE_ID>	Shows recommendations	✅
-
-Testing Results
-<details> <summary>✅ Seed Minimal Test</summary>
-
-</details> <details> <summary>✅ List Perfumes Output</summary>
-
-</details> <details> <summary>✅ Search Result Example</summary>
-
-</details> <details> <summary>✅ Recommendations Output</summary>
-
-</details>
-Validation
-Code Style: Checked with Ruff – no major issues found.
-
-
-Testing: pytest used to confirm all functions work correctly.
-
-Deployment: Tested successfully on Heroku with heroku run bash.
-
-Error Handling: All commands handle wrong inputs clearly with helpful messages.
-
-
-Open the terminal:
-
-heroku run bash -a aromavault
-python app.py --help
-Forking the Repository
-Go to the GitHub repo AromaVault.
-
-Click Fork in the top right corner.
-
-This makes a copy under your own account.
-
-Cloning Locally
-On GitHub, click the green Code button.
-
-Copy the HTTPS link.
-
-In your terminal:
-
-
-git clone https://github.com/HollieMorrison/aromavault.git
-Create and activate a virtual environment:
-
-Media
-Screenshots created by Hollie Morrison.
-
-Acknowledgements
-Thanks to my mentor for feedback and advice.
-
-The Code Institute Slack community for answering questions and helping me fix issues.
-
-Friends and family for testing the app and giving honest feedback.
-=======
-![CI logo](https://codeinstitute.s3.amazonaws.com/fullstack/ci_logo_small.png)
-
-Welcome,
-
-This is the Code Institute student template for deploying your third portfolio project, the Python command-line project. The last update to this file was: **May 14, 2024**
-
-## Reminders
-
-- Your code must be placed in the `run.py` file
-- Your dependencies must be placed in the `requirements.txt` file
-- Do not edit any of the other files or your code may not deploy properly
-
-## Creating the Heroku app
-
-When you create the app, you will need to add two buildpacks from the _Settings_ tab. The ordering is as follows:
-
-1. `heroku/python`
-2. `heroku/nodejs`
-
-You must then create a _Config Var_ called `PORT`. Set this to `8000`
-
-If you have credentials, such as in the Love Sandwiches project, you must create another _Config Var_ called `CREDS` and paste the JSON into the value field.
-
-Connect your GitHub repository and deploy as normal.
-
-## Constraints
-
-The deployment terminal is set to 80 columns by 24 rows. That means that each line of text needs to be 80 characters or less otherwise it will be wrapped onto a second line.
+![Homepage](./assets/readme/homepage.png)  
+![Perfumes HTML](./assets/readme/perfumes-table.png)  
+![Pretty JSON](./assets/readme/pretty-json.png)
 
 ---
 
-Happy coding!
->>>>>>> template/main
+## Features Left To Implement
+
+- CLI commands to import/export CSV and seed/reset catalog.
+- Pagination for `/perfumes` when the dataset grows.
+- Save favourite notes per user.
+- Simple admin authentication for write routes.
+
+---
+
+## Design
+
+- Simple, clean HTML with system fonts for accessibility and speed.
+- Minimal, predictable API with clear query parameters.
+- CLI commands grouped under a single Typer app with built-in help.
+
+---
+
+## Technologies Used
+
+- Python 3.12  
+- Flask (web server & routes)  
+- Typer (command-line interface)  
+- Gunicorn (production WSGI server on Heroku)  
+- JSON files for data
+
+---
+
+## Frameworks, Libraries & Programs Used
+
+- GitHub — version control & hosting  
+- Heroku — deployment  
+- Visual Studio Code — development  
+- Black & Ruff — formatting and linting  
+- Pytest — unit testing
+
+---
+
+## Testing
+
+We validated code style and ran tests locally, and manually exercised the endpoints on Heroku.
+
+- `ruff check .` — no significant issues after the final pass  
+- `black .` — consistent formatting  
+- `pytest -q` — unit tests pass locally
+
+### Validation Results
+
+<details>
+<summary>Ruff & Black</summary>
+
+- Ruff fixed minor nits; Black formatted the codebase consistently.
+</details>
+
+<details>
+<summary>Pytest</summary>
+
+- All tests passed locally in the last run.
+</details>
+
+### Manual Testing
+
+- Visited `/` homepage, `/perfumes` HTML table.  
+- Confirmed JSON endpoints with and without `?pretty=1`.  
+- Searched by brand/notes, verified price filters.  
+- Checked `/api/health` returns `{ "status": "ok" }`.  
+- Ran CLI on dyno: `hello` prints a greeting.
+
+### Lighthouse Report
+
+*(Add screenshots once captured.)*
+
+---
+
+## Deployment and local development
+
+### Heroku
+
+1. **Procfile**
+2. **Python version**
+3. **Deploy**
+```bash
+git push heroku main
+heroku logs --tail --app <your-app-name>
+
+## Live App
+
+Live app:
+https://aromavault-eu-e54dae1bad1f.herokuapp.com/
+
+Forking the GitHub Repository
+
+Open the repository and click Fork.
+
+Work on your copy without affecting the original.
+
+Local Clone
+git clone <repo-url>
+cd aromavault
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+pip install -r requirements.txt
+# Development server:
+flask --app web run     # or: python web.py (dev only)
+# Visit:
+# http://127.0.0.1:5000/
+
+Running the CLI (one-off)
+
+On Heroku:
+
+heroku run python run.py --help --app <your-app>
+heroku run python run.py hello --name Hollie --app <your-app>
+
+
+Locally:
+
+python run.py --help
+python run.py hello --name Hollie
+
+Bug Fix Log (3 issues + resolutions)
+1) Heroku started Node/Total.js instead of Python
+
+Symptom: Logs showed node index.js then node: command not found → app crashed.
+
+Cause: A leftover Node scaffold and an old Procfile made Heroku detect/run Node.
+
+Fix: Removed the Node entrypoint and switched to Python:
+
+Procfile → web: gunicorn web:app
+
+Kept Python buildpack only.
+
+Result: Gunicorn boots, the web dyno stays up, and / serves the homepage.
+
+
+
+2) Circular import between app.py and run.py
+
+Symptom: Terminal page showed import/circular errors when loading the CLI.
+
+Cause: app.py imported run.py and run.py imported app.py.
+
+Fix: Ensured app.py defines the Typer app and run.py only imports it:
+
+
+# app.py
+import typer
+app = typer.Typer(help="AromaVault command-line interface.")
+
+# run.py
+from app import app
+if __name__ == "__main__":
+    app(prog_name="run.py")
+
+
+Result: CLI imports cleanly with no circular reference.
+
+3) Typer had no commands → “Missing command.”
+
+Symptom: Deployed terminal printed usage text with no commands; --help was not useful.
+
+Cause: A Typer app existed but no commands were registered.
+
+Fix: Added a minimal command to prove the CLI wiring:
+
+@app.command()
+def hello(name: str = "world"):
+    """Say hello (deployment smoke test)."""
+    print(f"Hello, {name}!")
+
+
+Result: heroku run python run.py hello --name Hollie --app <app> prints a greeting; --help shows available commands.
+
+Credits
+Code
+
+README structure adapted from a previous project template and tailored for a CLI + API app.
+
+Typer & Flask docs for quick-start patterns.
+
+Content
+
+Sample perfume entries created for demonstration/testing.
+
+Media
+
+Placeholder screenshots in ./assets/readme/ (replace with real app captures).
+
+Acknowledgements
+
+Thanks to mentors/reviewers for deployment and structure feedback.
+
+Slack community for tips on Heroku Procfiles and Typer.
