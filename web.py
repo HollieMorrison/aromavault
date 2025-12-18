@@ -17,29 +17,31 @@ HOMEPAGE = """<!doctype html>
   <title>AromaVault</title>
   <style>
     :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; margin: 2rem; line-height: 1.5; }
-    main { max-width: 800px; margin: 0 auto; }
+    body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; margin: 2rem; line-height: 1.5; }
+    main { max-width: 980px; margin: 0 auto; }
     h1 { margin-bottom: .25rem; }
-    form, .card { border: 1px solid #ccc; padding: 1rem; border-radius: .75rem; margin: 1rem 0; }
-    label { display: block; margin: .25rem 0; }
-    input, button { font: inherit; padding: .5rem .75rem; }
-    code { background: rgba(127,127,127,.15); padding: .1rem .3rem; border-radius: .3rem; }
-    .muted { opacity: .7; }
-    .grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-    .pill { display:inline-block; padding:.15rem .5rem; border-radius:999px; border:1px solid #888; font-size:.85rem; margin-right:.35rem;}
-    .footer { margin-top: 2rem; font-size: .9rem; opacity: .8; }
+    .card, form { border: 1px solid #ccc; padding: 1rem; border-radius: .75rem; margin: 1rem 0; }
+    label { display:block; margin:.25rem 0; }
+    input, button { font: inherit; padding:.5rem .75rem; }
+    code { background: rgba(127,127,127,.15); padding:.1rem .3rem; border-radius:.3rem; }
+    .muted { opacity:.7; }
+    .grid { display:grid; gap:.75rem; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); }
+    .footer { margin-top:2rem; font-size:.9rem; opacity:.8; }
+    a.button { display:inline-block; padding:.5rem .8rem; border:1px solid #888; border-radius:.5rem; text-decoration:none; margin-right:.5rem;}
   </style>
 </head>
 <body>
 <main>
   <h1>AromaVault</h1>
-  <p class="muted">Simple dataset manager for perfumes. This page lets anyone use the app on Heroku.</p>
+  <p class="muted">Simple dataset manager for perfumes. Use the quick links or the forms below.</p>
 
   <div class="card">
     <h2>Quick Links</h2>
     <p>
-      <a href="/api/perfumes">/api/perfumes</a> — list all<br>
-      <a href="/api/health">/api/health</a> — health check
+      <a class="button" href="/perfumes">View perfumes (HTML)</a>
+      <a class="button" href="/api/perfumes?pretty=1">Perfumes (pretty JSON)</a>
+      <a class="button" href="/api/perfumes">Perfumes (raw JSON)</a>
+      <a class="button" href="/api/health">Health</a>
     </p>
   </div>
 
@@ -52,7 +54,8 @@ HOMEPAGE = """<!doctype html>
         <label>Notes (any, comma separated) <input name="notes_any" placeholder="vanilla,jasmine"></label>
         <label>Max Price <input name="price_max" placeholder="80"></label>
       </div>
-      <button type="submit">Search</button>
+      <button type="submit">Search (JSON)</button>
+      <p class="muted">Tip: add <code>?pretty=1</code> to the URL for readable JSON.</p>
     </form>
   </div>
 
@@ -66,7 +69,8 @@ HOMEPAGE = """<!doctype html>
         <label>Max Price <input name="price_max" placeholder="70"></label>
         <label>K (results) <input name="k" placeholder="5"></label>
       </div>
-      <button type="submit">Recommend</button>
+      <button type="submit">Recommend (JSON)</button>
+      <p class="muted">Tip: add <code>?pretty=1</code> to the URL for readable JSON.</p>
     </form>
   </div>
 
@@ -91,10 +95,63 @@ def homepage() -> Response:
 def health():
     return {"ok": True, "service": "AromaVault", "version": 1}
 
+# ---------- HTML LIST VIEW ----------
+@app.get("/perfumes")
+def perfumes_html():
+    items = storage.list_perfumes()
+    def pill(text): return f'<span class="pill">{text}</span>'
+    css = """
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; margin:2rem; }
+      main { max-width: 1100px; margin:0 auto; }
+      h1 { margin-bottom: .25rem; }
+      .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap:1rem; }
+      .card { border:1px solid #ccc; border-radius:.75rem; padding:1rem; }
+      .title { font-weight:600; margin-bottom:.25rem; }
+      .muted { opacity:.75; font-size:.9rem; }
+      .row { margin:.25rem 0; }
+      .pill { display:inline-block; padding:.15rem .5rem; border-radius:999px; border:1px solid #888; font-size:.85rem; margin:.15rem .25rem .15rem 0; }
+      .bad { border-color:#c44; }
+      .top { display:flex; justify-content:space-between; align-items:center; }
+    </style>
+    """
+    cards = []
+    for p in items:
+        notes = "".join(pill(n) for n in p.get("notes", []))
+        allergens = "".join(f'<span class="pill bad">{a}</span>' for a in p.get("allergens", []))
+        cards.append(f"""
+          <div class="card">
+            <div class="top">
+              <div class="title">{p.get('name','(no name)')}</div>
+              <div class="muted">{p.get('brand','')}</div>
+            </div>
+            <div class="row">Price: £{p.get('price','')}</div>
+            <div class="row">Rating: {p.get('rating','')}</div>
+            <div class="row">Stock: {p.get('stock','')}</div>
+            <div class="row">Notes: {notes or '<span class="muted">(none)</span>'}</div>
+            <div class="row">Allergens: {allergens or '<span class="muted">(none)</span>'}</div>
+            <div class="row muted">ID: {p.get('id','')}</div>
+          </div>
+        """)
+
+    html = f"""<!doctype html>
+<html><head><meta charset="utf-8"/><title>AromaVault – Perfumes</title>{css}</head>
+<body><main>
+  <h1>Perfumes</h1>
+  <p class="muted"><a href="/">← Back</a> • Also available as JSON: <a href="/api/perfumes?pretty=1">/api/perfumes?pretty=1</a></p>
+  <div class="grid">
+    {''.join(cards)}
+  </div>
+</main></body></html>"""
+    return Response(html, mimetype="text/html")
+
+# ---------- JSON API (pretty support) ----------
 @app.get("/api/perfumes")
 def list_perfumes():
-    # Use your storage helpers directly
     items = storage.list_perfumes()
+    if request.args.get("pretty"):
+        return Response(json.dumps(items, indent=2, ensure_ascii=False), mimetype="application/json")
     return jsonify(items)
 
 @app.get("/api/search")
@@ -112,6 +169,8 @@ def search():
         price_max=price_max_f,
         path=None,
     )
+    if request.args.get("pretty"):
+        return Response(json.dumps(results, indent=2, ensure_ascii=False), mimetype="application/json")
     return jsonify(results)
 
 @app.get("/api/recommend")
@@ -134,4 +193,6 @@ def recommend():
         price_max=price_max_f,
         k=k_i,
     )
+    if request.args.get("pretty"):
+        return Response(json.dumps(results, indent=2, ensure_ascii=False), mimetype="application/json")
     return jsonify(results)
