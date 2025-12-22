@@ -1,0 +1,262 @@
+[
+  {
+    "id": "p001",
+    "name": "Dior J’adore Parfum d’eau",
+    "brand": "Dior",
+    "family": "Floral",
+    "notes": [
+      "Jasmine",
+      "Magnolia",
+      "Neroli"
+    ],
+    "concentration": "EDP",
+    "price": 110
+  },
+  {
+    "id": "p002",
+    "name": "Chanel Coco Mademoiselle",
+    "brand": "Chanel",
+    "family": "Chypre Floral",
+    "notes": [
+      "Orange",
+      "Jasmine",
+      "Patchouli"
+    ],
+    "concentration": "EDP",
+    "price": 132
+  },
+  {
+    "id": "p003",
+    "name": "YSL Libre",
+    "brand": "Yves Saint Laurent",
+    "family": "Floral",
+    "notes": [
+      "Lavender",
+      "Orange Blossom",
+      "Vanilla"
+    ],
+    "concentration": "EDP",
+    "price": 96
+  },
+  {
+    "id": "p004",
+    "name": "Lancôme La Vie Est Belle",
+    "brand": "Lancôme",
+    "family": "Gourmand Floral",
+    "notes": [
+      "Iris",
+      "Praline",
+      "Vanilla"
+    ],
+    "concentration": "EDP",
+    "price": 92
+  },
+  {
+    "id": "p005",
+    "name": "Marc Jacobs Daisy",
+    "brand": "Marc Jacobs",
+    "family": "Floral",
+    "notes": [
+      "Violet Leaf",
+      "Jasmine",
+      "Strawberry"
+    ],
+    "concentration": "EDT",
+    "price": 70
+  },
+  {
+    "id": "p006",
+    "name": "Tom Ford Black Orchid",
+    "brand": "Tom Ford",
+    "family": "Oriental Floral",
+    "notes": [
+      "Black Truffle",
+      "Orchid",
+      "Patchouli"
+    ],
+    "concentration": "EDP",
+    "price": 118
+  },
+  {
+    "id": "p007",
+    "name": "Jo Malone Peony & Blush Suede",
+    "brand": "Jo Malone London",
+    "family": "Floral",
+    "notes": [
+      "Peony",
+      "Red Apple",
+      "Suede"
+    ],
+    "concentration": "Cologne",
+    "price": 110
+  },
+  {
+    "id": "p008",
+    "name": "Maison Francis Kurkdjian Baccarat Rouge 540",
+    "brand": "MFK",
+    "family": "Amber Floral",
+    "notes": [
+      "Saffron",
+      "Amberwood",
+      "Cedar"
+    ],
+    "concentration": "EDP",
+    "price": 235
+  },
+  {
+    "id": "p009",
+    "name": "Armani Si",
+    "brand": "Giorgio Armani",
+    "family": "Chypre Fruity",
+    "notes": [
+      "Blackcurrant",
+      "Rose",
+      "Vanilla"
+    ],
+    "concentration": "EDP",
+    "price": 98
+  },
+  {
+    "id": "p010",
+    "name": "Dior Miss Dior (EDP)",
+    "brand": "Dior",
+    "family": "Floral",
+    "notes": [
+      "Rose",
+      "Peony",
+      "Musk"
+    ],
+    "concentration": "EDP",
+    "price": 115
+  },
+  {
+    "id": "p011",
+    "name": "Carolina Herrera Good Girl",
+    "brand": "Carolina Herrera",
+    "family": "Amber Floral",
+    "notes": [
+      "Tuberose",
+      "Jasmine",
+      "Tonka"
+    ],
+    "concentration": "EDP",
+    "price": 96
+  },
+  {
+    "id": "p012",
+    "name": "Viktor&Rolf Flowerbomb",
+    "brand": "Viktor&Rolf",
+    "family": "Floral",
+    "notes": [
+      "Tea",
+      "Jasmine",
+      "Patchouli"
+    ],
+    "concentration": "EDP",
+    "price": 110
+  },
+  {
+    "id": "p013",
+    "name": "Givenchy L’Interdit",
+    "brand": "Givenchy",
+    "family": "Floral Woody",
+    "notes": [
+      "Tuberose",
+      "Orange Blossom",
+      "Vetiver"
+    ],
+    "concentration": "EDP",
+    "price": 94
+  },
+  {
+    "id": "p014",
+    "name": "Mugler Alien",
+    "brand": "Mugler",
+    "family": "Amber Woody",
+    "notes": [
+      "Jasmine Sambac",
+      "Cashmeran",
+      "Amber"
+    ],
+    "concentration": "EDP",
+    "price": 97
+  },
+  {
+    "id": "p015",
+    "name": "Zara Femme",
+    "brand": "Zara",
+    "family": "Gourmand",
+    "notes": [
+      "Vanilla",
+      "Peony",
+      "Musk"
+    ],
+    "concentration": "EDP",
+    "price": 18
+  },
+  {
+    "id": "p016",
+    "name": "Essentials Rose Jam",
+    "brand": "Lush",
+    "family": "Floral Gourmand",
+    "notes": [
+      "Rose",
+      "Geranium",
+      "Vanilla"
+    ],
+    "concentration": "Body Spray",
+    "price": 30
+  },
+  {
+    "id": "p017",
+    "name": "Burberry Her",
+    "brand": "Burberry",
+    "family": "Fruity Floral",
+    "notes": [
+      "Strawberry",
+      "Blackberry",
+      "Musk"
+    ],
+    "concentration": "EDP",
+    "price": 96
+  },
+  {
+    "id": "p018",
+    "name": "Gucci Bloom",
+    "brand": "Gucci",
+    "family": "White Floral",
+    "notes": [
+      "Rangoon Creeper",
+      "Jasmine",
+      "Tuberose"
+    ],
+    "concentration": "EDP",
+    "price": 110
+  },
+  {
+    "id": "p019",
+    "name": "Dior Sauvage",
+    "brand": "Dior",
+    "family": "Aromatic Fougere",
+    "notes": [
+      "Bergamot",
+      "Ambroxan",
+      "Pepper"
+    ],
+    "concentration": "EDT",
+    "price": 96
+  },
+  {
+    "id": "p020",
+    "name": "Bleu de Chanel",
+    "brand": "Chanel",
+    "family": "Woody Aromatic",
+    "notes": [
+      "Grapefruit",
+      "Incense",
+      "Cedar"
+    ],
+    "concentration": "EDP",
+    "price": 120
+  }
+]
