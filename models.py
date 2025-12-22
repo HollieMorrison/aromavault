@@ -1,6 +1,5 @@
 import uuid
 from dataclasses import dataclass, field
-from typing import Optional
 
 # changed from typing import list, optional delete list.
 
@@ -14,7 +13,7 @@ class Perfume:
     price: float
     notes: list[str] = field(default_factory=list)
     allergens: list[str] = field(default_factory=list)
-    rating: Optional[float] = None
+    rating: float | None = None
     stock: int = 0
 
     @staticmethod
@@ -24,7 +23,7 @@ class Perfume:
         price: float,
         notes: list[str],
         allergens: list[str],
-        rating: Optional[float] = None,
+        rating: float | None = None,
         stock: int = 0,
     ) -> "Perfume":
         """Factory method that normalises and validates fields before creating a Perfume."""

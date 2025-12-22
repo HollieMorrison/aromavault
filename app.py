@@ -1,4 +1,5 @@
 import typer
+
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 """
 Shim file for tests that expect `import app`.
@@ -13,10 +14,11 @@ def main():
     # Having a callback makes 'app' a valid command group even with no subcommands.
     pass
 
+
 # --- Tiny subcommand for smoke test ---
 @app.command()
 def hello(name: str = "world"):
     """Say hello (deployment smoke test)."""
     import typer
-    typer.echo(f"Hello, {name}!")
 
+    typer.echo(f"Hello, {name}!")

@@ -1,6 +1,14 @@
 [tool.ruff]
-line-length = 100
-target-version = "py311"
-# Keep core rules; skip a few noisy style nits
-select = ["E","F","I","UP","N","B"]
-ignore = ["UP045","N814","B009"]
+line-length = 88
+target-version = "py312"
+extend-select = ["E","F","I","UP","B","SIM","PL"]
+ignore = []
+fix = true
+unsafe-fixes = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["recommender","storage","app"]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Optional
 
-
-def _norm_set(values: Optional[list[str]]) -> set[str]:
+def _norm_set(values: list[str] | None) -> set[str]:
     if not values:
         return set()
     return {
@@ -13,10 +11,10 @@ def _norm_set(values: Optional[list[str]]) -> set[str]:
 
 def score_perfume(
     perfume: dict,
-    preferred_notes: Optional[list[str]] = None,
-    avoid_notes: Optional[list[str]] = None,
-    brand_bias: Optional[str] = None,
-    price_max: Optional[float] = None,
+    preferred_notes: list[str] | None = None,
+    avoid_notes: list[str] | None = None,
+    brand_bias: str | None = None,
+    price_max: float | None = None,
 ) -> float:
     """
     Return a relevance score for a single perfume.
@@ -39,12 +37,11 @@ def score_perfume(
     score -= 2.0 * len(notes.intersection(avoid))
 
     # Brand bias
-    if brand_bias:
-        if (
-            str(perfume.get("brand", "")).casefold().strip()
-            == brand_bias.casefold().strip()
-        ):
-            score += 1.0
+    if brand_bias and (
+        str(perfume.get("brand", "")).casefold().strip()
+        == brand_bias.casefold().strip()
+    ):
+        score += 1.0
 
     # Price consideration
     if price_max is not None:
@@ -67,10 +64,10 @@ def score_perfume(
 
 def recommend(
     catalog: list[dict],
-    preferred_notes: Optional[list[str]] = None,
-    avoid_notes: Optional[list[str]] = None,
-    brand_bias: Optional[str] = None,
-    price_max: Optional[float] = None,
+    preferred_notes: list[str] | None = None,
+    avoid_notes: list[str] | None = None,
+    brand_bias: str | None = None,
+    price_max: float | None = None,
     k: int = 5,
 ) -> list[dict]:
     """

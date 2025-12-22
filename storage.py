@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 # Default data file (you can override by passing a Path to functions)
 DEFAULT_DB = Path("data.json")
@@ -36,21 +35,21 @@ def _write_json(path: Path, data: list[dict]) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def load_all(path: Optional[Path] = None) -> list[dict]:
+def load_all(path: Path | None = None) -> list[dict]:
     """
     Load the entire dataset from JSON.
     """
     return _read_json(path or DEFAULT_DB)
 
 
-def save_all(items: list[dict], path: Optional[Path] = None) -> None:
+def save_all(items: list[dict], path: Path | None = None) -> None:
     """
     Overwrite the dataset with the provided list of dicts.
     """
     _write_json(path or DEFAULT_DB, items)
 
 
-def get_by_id(pid: str, path: Optional[Path] = None) -> Optional[dict]:
+def get_by_id(pid: str, path: Path | None = None) -> dict | None:
     """
     Return the perfume dict with matching id, or None if not found.
     """
@@ -61,7 +60,7 @@ def get_by_id(pid: str, path: Optional[Path] = None) -> Optional[dict]:
     return None
 
 
-def upsert(item: dict, path: Optional[Path] = None) -> dict:
+def upsert(item: dict, path: Path | None = None) -> dict:
     """
     Insert or update a perfume by its 'id' field.
     Returns the stored item.
@@ -82,7 +81,7 @@ def upsert(item: dict, path: Optional[Path] = None) -> dict:
     return item
 
 
-def delete(pid: str, path: Optional[Path] = None) -> bool:
+def delete(pid: str, path: Path | None = None) -> bool:
     """
     Delete an item by id. Returns True if something was removed.
     """
@@ -96,11 +95,11 @@ def delete(pid: str, path: Optional[Path] = None) -> bool:
 
 
 def search(
-    query: Optional[str] = None,
-    brand: Optional[str] = None,
-    notes_any: Optional[list[str]] = None,
-    price_max: Optional[float] = None,
-    path: Optional[Path] = None,
+    query: str | None = None,
+    brand: str | None = None,
+    notes_any: list[str] | None = None,
+    price_max: float | None = None,
+    path: Path | None = None,
 ) -> list[dict]:
     """
     Simple search across the catalog.
@@ -143,12 +142,12 @@ def search(
 # --- Compatibility wrappers so existing app.py imports keep working ---
 
 
-def add_perfume(item: dict, path: Optional[Path] = None) -> dict:
+def add_perfume(item: dict, path: Path | None = None) -> dict:
     """Legacy name: insert a perfume (or update if id exists)."""
     return upsert(item, path)
 
 
-def update_perfume(pid: str, changes: dict, path: Optional[Path] = None) -> dict:
+def update_perfume(pid: str, changes: dict, path: Path | None = None) -> dict:
     """Legacy name: update by id with partial changes."""
     existing = get_by_id(pid, path)
     if existing is None:
@@ -157,27 +156,27 @@ def update_perfume(pid: str, changes: dict, path: Optional[Path] = None) -> dict
     return upsert(merged, path)
 
 
-def delete_perfume(pid: str, path: Optional[Path] = None) -> bool:
+def delete_perfume(pid: str, path: Path | None = None) -> bool:
     """Legacy name: delete by id."""
     return delete(pid, path)
 
 
-def get_perfume_by_id(pid: str, path: Optional[Path] = None) -> Optional[dict]:
+def get_perfume_by_id(pid: str, path: Path | None = None) -> dict | None:
     """Legacy name: fetch by id."""
     return get_by_id(pid, path)
 
 
-def list_perfumes(path: Optional[Path] = None) -> list[dict]:
+def list_perfumes(path: Path | None = None) -> list[dict]:
     """Legacy name: list all perfumes."""
     return load_all(path)
 
 
 def search_perfumes(
-    query: Optional[str] = None,
-    brand: Optional[str] = None,
-    notes_any: Optional[list[str]] = None,
-    price_max: Optional[float] = None,
-    path: Optional[Path] = None,
+    query: str | None = None,
+    brand: str | None = None,
+    notes_any: list[str] | None = None,
+    price_max: float | None = None,
+    path: Path | None = None,
 ) -> list[dict]:
     """Legacy name: search helper."""
     return search(
@@ -190,22 +189,22 @@ def search_perfumes(
 DEFAULT_PROFILES_DB = Path("profiles.json")
 
 
-def list_profiles(path: Optional[Path] = None) -> list[dict]:
+def list_profiles(path: Path | None = None) -> list[dict]:
     """Return all user profiles."""
     return load_all(path or DEFAULT_PROFILES_DB)
 
 
-def get_profile_by_id(uid: str, path: Optional[Path] = None) -> Optional[dict]:
+def get_profile_by_id(uid: str, path: Path | None = None) -> dict | None:
     """Fetch a user profile by id."""
     return get_by_id(uid, path or DEFAULT_PROFILES_DB)
 
 
-def add_profile(profile: dict, path: Optional[Path] = None) -> dict:
+def add_profile(profile: dict, path: Path | None = None) -> dict:
     """Insert or update a user profile (must contain 'id')."""
     return upsert(profile, path or DEFAULT_PROFILES_DB)
 
 
-def update_profile(uid: str, changes: dict, path: Optional[Path] = None) -> dict:
+def update_profile(uid: str, changes: dict, path: Path | None = None) -> dict:
     """Partial update to a profile by id."""
     existing = get_profile_by_id(uid, path)
     if existing is None:
@@ -214,13 +213,13 @@ def update_profile(uid: str, changes: dict, path: Optional[Path] = None) -> dict
     return upsert(merged, path or DEFAULT_PROFILES_DB)
 
 
-def delete_profile(uid: str, path: Optional[Path] = None) -> bool:
+def delete_profile(uid: str, path: Path | None = None) -> bool:
     """Delete a profile by id."""
     return delete(uid, path or DEFAULT_PROFILES_DB)
 
 
 # ===== CSV export (perfumes) =====
-def export_csv(csv_path, path: Optional[Path] = None) -> int:
+def export_csv(csv_path, path: Path | None = None) -> int:
     """
     Export the perfumes catalog to CSV.
     - csv_path: destination file path (str or Path)
@@ -260,13 +259,13 @@ def export_csv(csv_path, path: Optional[Path] = None) -> int:
 
 
 # --- Alias for legacy import name expected by app.py ---
-def get_profile(uid: str, path: Optional[Path] = None):
+def get_profile(uid: str, path: Path | None = None):
     """Legacy alias: get_profile -> get_profile_by_id."""
     return get_profile_by_id(uid, path)
 
 
 # ===== CSV import (perfumes) =====
-def import_csv(csv_path, path: Optional[Path] = None, overwrite: bool = False) -> int:
+def import_csv(csv_path, path: Path | None = None, overwrite: bool = False) -> int:
     """
     Import perfumes from a CSV file into the JSON catalog.
     - csv_path: source CSV (str or Path)

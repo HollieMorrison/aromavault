@@ -1,10 +1,11 @@
 from __future__ import annotations
-from flask import Flask, request, jsonify, Response
-import json
-import typing as t
 
-import storage
+import json
+
+from flask import Flask, Response, jsonify, request
+
 import recommender
+import storage
 
 app = Flask(__name__)
 
@@ -76,24 +77,31 @@ HOMEPAGE = """<!doctype html>
 </html>
 """
 
+
 def _csv_to_list(s: str | None) -> list[str] | None:
     if not s:
         return None
     return [part.strip() for part in s.split(",") if part.strip()]
 
+
 @app.get("/")
 def homepage() -> Response:
     return Response(HOMEPAGE, mimetype="text/html")
+
 
 @app.get("/api/health")
 def health():
     return {"ok": True, "service": "AromaVault", "version": 1}
 
+
 # ---------- HTML LIST VIEW ----------
 @app.get("/perfumes")
 def perfumes_html():
     items = storage.list_perfumes()
-    def pill(text): return f'<span class="pill">{text}</span>'
+
+    def pill(text):
+        return f'<span class="pill">{text}</span>'
+
     css = """
     <style>
       :root { color-scheme: light dark; }
@@ -113,8 +121,11 @@ def perfumes_html():
     cards = []
     for p in items:
         notes = "".join(pill(n) for n in p.get("notes", []))
-        allergens = "".join(f'<span class="pill bad">{a}</span>' for a in p.get("allergens", []))
-        cards.append(f"""
+        allergens = "".join(
+            f'<span class="pill bad">{a}</span>' for a in p.get("allergens", [])
+        )
+        cards.append(
+            f"""
           <div class="card">
             <div class="top">
               <div class="title">{p.get('name','(no name)')}</div>
@@ -127,7 +138,8 @@ def perfumes_html():
             <div class="row">Allergen warnings: {allergens or '<span class="muted">(none)</span>'}</div>
             <div class="row muted">ID: {p.get('id','')}</div>
           </div>
-        """)
+        """
+        )
 
     html = f"""<!doctype html>
 <html><head><meta charset="utf-8"/><title>AromaVault – Perfume Catalogue</title>{css}</head>
@@ -140,13 +152,17 @@ def perfumes_html():
 </main></body></html>"""
     return Response(html, mimetype="text/html")
 
+
 # ---------- JSON API (pretty support) ----------
 @app.get("/api/perfumes")
 def list_perfumes():
     items = storage.list_perfumes()
     if request.args.get("pretty"):
-        return Response(json.dumps(items, indent=2, ensure_ascii=False), mimetype="application/json")
+        return Response(
+            json.dumps(items, indent=2, ensure_ascii=False), mimetype="application/json"
+        )
     return jsonify(items)
+
 
 @app.get("/api/search")
 def search():
@@ -164,8 +180,12 @@ def search():
         path=None,
     )
     if request.args.get("pretty"):
-        return Response(json.dumps(results, indent=2, ensure_ascii=False), mimetype="application/json")
+        return Response(
+            json.dumps(results, indent=2, ensure_ascii=False),
+            mimetype="application/json",
+        )
     return jsonify(results)
+
 
 @app.get("/api/recommend")
 def recommend():
@@ -188,5 +208,8 @@ def recommend():
         k=k_i,
     )
     if request.args.get("pretty"):
-        return Response(json.dumps(results, indent=2, ensure_ascii=False), mimetype="application/json")
+        return Response(
+            json.dumps(results, indent=2, ensure_ascii=False),
+            mimetype="application/json",
+        )
     return jsonify(results)
