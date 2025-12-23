@@ -386,7 +386,7 @@ async function addPerf() {{
     body: JSON.stringify({{name, brand, price, notes}})
   }});
   const j = await r.json();
-  alert(j.ok ? `Saved: ${{j.item.name}} (${j.action})` : `Error: ${{j.error||'unknown'}}`);
+  alert(j.ok ? `Saved: ${{j.item.name}} (${{j.action}})` : `Error: ${{j.error||'unknown'}}`);
   await loadAll();
 }}
 
