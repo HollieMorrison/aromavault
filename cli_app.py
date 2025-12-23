@@ -1,167 +1,99 @@
 from __future__ import annotations
 from pathlib import Path
-import json
 from typing import List
+import json
 import typer
 
-# Tests monkeypatch storage.DEFAULT_DB, so we **must** import storage and use that path.
-import storage  # must expose DEFAULT_DB as a Path-like
+# The tests (and our CLI) use this path from your storage module
+import storage  # must define DEFAULT_DB (Path-like)
 
-# Build the Typer app internally...
-_typer_app = typer.Typer(
-    help="AromaVault command-line interface.",
-    no_args_is_help=True,
+app = typer.Typer(
+    name="aromavault",
+    help="AromaVault CLI: manage your perfume catalogue (list, add, delete, seed).",
 )
 
-
-def _ensure_parent(p: Path) -> None:
+# ---------- helpers ----------
+def _db_path() -> Path:
+    p = Path(storage.DEFAULT_DB)
     p.parent.mkdir(parents=True, exist_ok=True)
+    return p
 
-
-def _read_list(p: Path) -> List[dict]:
+def _load() -> List[dict]:
+    p = _db_path()
     if not p.exists():
         return []
-    with p.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-    # Accept either {"perfumes":[...]} or a bare list [...]
-    return data.get("perfumes", data) if isinstance(data, dict) else data
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return []
 
+def _save(items: List[dict]) -> None:
+    _db_path().write_text(json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8")
 
-def _write_list(p: Path, items: List[dict]) -> None:
-    _ensure_parent(p)
-    with p.open("w", encoding="utf-8") as f:
-        json.dump(items, f, ensure_ascii=False, indent=2)
+def _parse_notes(notes_csv: str | None) -> List[str]:
+    if not notes_csv:
+        return []
+    return [n.strip() for n in notes_csv.split(",") if n.strip()]
 
-
-@_typer_app.command("seed-minimal")
+# ---------- commands already used by tests ----------
+@app.command("seed-minimal")
 def seed_minimal() -> None:
-    """Seed 3 sample perfumes into storage.DEFAULT_DB (used by tests)."""
-    db_path = Path(storage.DEFAULT_DB)
-    items = [
-        {
-            "id": "seed-woodland-trail",
-            "name": "Woodland Trail",
-            "brand": "Earth&Oak",
-            "price": 79.0,
-            "notes": ["oakmoss", "cedar", "vetiver"],
-            "allergens": ["oakmoss"],
-            "stock": 4,
-            "rating": 4.6,
-        },
-        {
-            "id": "seed-night-bloom-xl",
-            "name": "Night Bloom XL",
-            "brand": "Nocturne",
-            "price": 65.0,
-            "notes": ["jasmine", "amber", "musk"],
-            "allergens": ["coumarin"],
-            "stock": 7,
-            "rating": 4.4,
-        },
-        {
-            "id": "seed-rose-dusk",
-            "name": "Rose Dusk",
-            "brand": "Floral",
-            "price": 55.0,
-            "notes": ["rose", "musk"],
-            "allergens": [],
-            "stock": 0,
-            "rating": 4.0,
-        },
+    """Seed 3 example perfumes (used by tests). Overwrites the DB."""
+    data = [
+        {"name": "Citrus Spark", "brand": "AromaVault", "price": 39.0, "notes": ["citrus", "bergamot", "fresh"]},
+        {"name": "Midnight Oud", "brand": "AromaVault", "price": 79.0, "notes": ["oud", "smoke", "amber"]},
+        {"name": "Vanilla Veil", "brand": "AromaVault", "price": 49.0, "notes": ["vanilla", "tonka", "warm"]},
     ]
-    _write_list(db_path, items)
-    typer.echo(f"Seeded {len(items)} perfumes into {db_path}")
+    _save(data)
+    typer.echo(f"Seeded 3 perfumes into {Path(storage.DEFAULT_DB).name}")
 
-
-@_typer_app.command("add-perf")
+@app.command("add-perf")
 def add_perf(
-    name: str = typer.Argument(..., help="Perfume name (positional)"),
+    name: str = typer.Argument(..., help="Perfume name"),
     brand: str = typer.Option(..., "--brand", help="Brand name"),
-    price: float = typer.Option(..., "--price", help="Price"),
-    notes: str = typer.Option("", "--notes", help="Comma-separated notes"),
+    price: float = typer.Option(..., "--price", help="Price in £"),
+    notes: str = typer.Option("", "--notes", help="Comma-separated notes, e.g. 'rose,musk'"),
 ) -> None:
-    """Add a perfume to storage.DEFAULT_DB (used by tests)."""
-    db_path = Path(storage.DEFAULT_DB)
-    items = _read_list(db_path)
-    item = {
-        "id": f"cli-{brand.lower().replace(' ', '-')}-{name.lower().replace(' ', '-')}",
-        "name": name,
-        "brand": brand,
-        "price": float(price),
-        "notes": [n.strip() for n in notes.split(",") if n.strip()],
-        "allergens": [],
-        "stock": 0,
-        "rating": 0.0,
-    }
-    items.append(item)
-    _write_list(db_path, items)
-    typer.echo(f"Added '{name}' by {brand} (£{price}) to {db_path}")
+    """Add a single perfume (used by tests and users)."""
+    data = _load()
+    if any(p["name"].lower() == name.lower() for p in data):
+        typer.echo(f"'{name}' already exists — updating details.")
+        data = [p for p in data if p["name"].lower() != name.lower()]
+    data.append({"name": name, "brand": brand, "price": float(price), "notes": _parse_notes(notes)})
+    _save(data)
+    typer.echo(f"Added '{name}' by {brand} (£{float(price)}) to {Path(storage.DEFAULT_DB).name}")
 
+# ---------- user-facing convenience commands ----------
+@app.command("list")
+def list_perfumes() -> None:
+    """List all perfumes in the catalogue."""
+    data = _load()
+    if not data:
+        typer.echo("No perfumes found. Try: aromavault add-perf \"Name\" --brand Brand --price 49.0 --notes rose,musk")
+        raise typer.Exit(code=0)
 
-# ...and export a Click command as `app` for tests/CliRunner:
-# (This avoids the 'Typer object has no attribute name' error.)
-from typer.main import get_command as _get_click_command
+    header = f"{'NAME':30} {'BRAND':20} {'PRICE':>7}  NOTES"
+    typer.echo(header)
+    typer.echo("-" * len(header))
+    for p in sorted(data, key=lambda x: (x["brand"].lower(), x["name"].lower())):
+        notes = ", ".join(p.get("notes", []))
+        typer.echo(f"{p['name'][:30]:30} {p['brand'][:20]:20} £{p['price']:>6.2f}  {notes}")
 
-app = _get_click_command(_typer_app)
+@app.command("del-perf")
+def delete_perf(name: str = typer.Argument(..., help="Perfume name to delete")) -> None:
+    """Delete a perfume by name (case-insensitive)."""
+    data = _load()
+    before = len(data)
+    data = [p for p in data if p["name"].lower() != name.lower()]
+    _save(data)
+    removed = before - len(data)
+    if removed:
+        typer.echo(f"Deleted {removed} item(s) named '{name}'.")
+    else:
+        typer.echo(f"No perfume named '{name}' was found.")
+
+# Export Click command for Click/CliRunner compatibility (tests, etc.)
+cli = typer.main.get_command(app)
 
 if __name__ == "__main__":
-    # Running directly: execute the Click command
     app()
-
-from typer import Option
-
-
-def _load_db(path: Path) -> list[dict]:
-    if path.exists() and path.read_text(encoding="utf-8").strip():
-        return json.loads(path.read_text(encoding="utf-8"))
-    return []
-
-
-def _save_db(path: Path, items: list[dict]) -> None:
-    path.write_text(json.dumps(items, indent=2), encoding="utf-8")
-
-
-@app.command("list-perf")
-def list_perf():
-    """
-    List all perfumes in the database.
-    """
-    db_path = Path(storage.DEFAULT_DB)
-    data = _load_db(db_path)
-    if not data:
-        typer.echo("No perfumes found.")
-        raise typer.Exit(code=0)
-    for i, p in enumerate(data, 1):
-        notes = p.get("notes")
-        if isinstance(notes, list):
-            notes = ",".join(notes)
-        typer.echo(
-            f"{i}. {p.get('name')} — {p.get('brand')} (£{p.get('price')}) [{notes}]"
-        )
-    typer.echo(f"\nTotal: {len(data)}")
-
-
-@app.command("delete-perf")
-def delete_perf(
-    name: str = typer.Argument(..., help="Exact perfume name to delete"),
-    all_matches: bool = Option(
-        False, "--all", help="Delete all matching names (not just the first)"
-    ),
-):
-    """
-    Delete perfume(s) by exact name match.
-    """
-    db_path = Path(storage.DEFAULT_DB)
-    data = _load_db(db_path)
-    if not data:
-        typer.echo("Database empty; nothing to delete.")
-        raise typer.Exit(code=0)
-    kept = []
-    removed = 0
-    for p in data:
-        if p.get("name") == name and (all_matches or removed == 0):
-            removed += 1
-            continue
-        kept.append(p)
-    _save_db(db_path, kept)
-    typer.echo(f"Removed {removed} item(s) named '{name}'.")
