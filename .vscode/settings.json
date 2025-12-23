@@ -1,12 +1,7 @@
 {
   "cSpell.words": [
-    "aromavault",
-    "Jaccard",
-    "neroli",
-    "normalises",
-    "oakmoss",
-    "personalised",
-    "rapidfuzz",
-    "typer"
+    "AromaVault", "aromavault", "CLI", "dataset", "endpoints", "favicon",
+    "gunicorn", "Heroku", "Jinja2", "JSON", "markdown", "Procfile", "pytest",
+    "recommender", "ruff", "typer", "uvicorn", "venv", "webapp", "Nocturne"
   ]
 }

@@ -1,14 +1,11 @@
-[tool.ruff]
-line-length = 88
-target-version = "py312"
-extend-select = ["E","F","I","UP","B","SIM","PL"]
-ignore = []
-fix = true
-unsafe-fixes = true
-
-[tool.ruff.lint.isort]
-known-first-party = ["recommender","storage","app"]
-
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Enable common rules + import sorter
+lint.select = ["E", "F", "W", "I", "UP"]
+# Ignore long-line warnings (E501) – Black handles wrapping pragmatically
+lint.ignore = ["E501"]
