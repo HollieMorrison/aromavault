@@ -1,283 +1,323 @@
-# AromaVault — Simple Perfume Recommender & Catalog (CLI + API)
+# AromaVault – Simple Perfume Manager (CLI + API + Web)
 
-AromaVault helps you explore a small perfume catalog, search by notes/brand/price, and get simple recommendations.  
-It exposes a **friendly web page** and **readable API endpoints** on Heroku, and includes a **Typer-based CLI** for one-off admin tasks.
+AromaVault is a small Python project that lets you **store, search and recommend perfumes**.  
+It has three parts:
 
-![Am I responsive](./assets/readme/am-i-responsive-image.png)  
-[**View the live AromaVault project here**](https://aromavault-eu-e54dae1bad1f.herokuapp.com/)
+- a **command-line tool** (CLI) for quick admin work  
+- a **JSON-based REST API** for programmatic access  
+- a **tiny web page** (one file) for demo/testing
 
----
+It’s purposely simple and easy to read. It uses a **JSON file** for data (no real database needed for this project).
 
-## Table of contents :
-
-### [User Experience (UX)](#user-experience-ux-1)
-* [User Stories](#user-stories)
-
-### [Features](#features)
-* [Existing Features](#existing-features)
-
-### [Features Left To Implement](#features-left-to-implement-1)
-
-### [Design](#design-1)
-
-### [Technologies Used](#technologies-used-1)
-
-### [Frameworks, Libraries & Programs Used](#frameworks-libraries-programs-used-1)
-
-### [Testing](#testing-1)
-* [Validation Results](#validation-results)
-* [Manual Testing](#manual-testing)
-* [Lighthouse Report](#lighthouse-report)
-
-### [Deployment and local development](#deployment-and-local-development-1)
-* [Heroku](#heroku)
-* [Forking the GitHub Repository](#forking-the-github-repository)
-* [Local Clone](#local-clone)
-* [Running the CLI (one-off)](#running-the-cli-one-off)
-
-### [Bug Fix Log (3 issues + resolutions)](#bug-fix-log-3-issues--resolutions-1)
-
-### [Credits](#credits-1)
-
-### [Acknowledgements](#acknowledgements-1)
+- **Live app:** https://aromavault-eu-e54dae1bad1f.herokuapp.com  
+- **Repository:** https://github.com/HollieMorrison/aromavault
 
 ---
 
-## User Experience (UX)
+## What the app does
 
-AromaVault is for users who want a **simple way to browse perfumes** by notes (e.g., rose, vanilla), filter by price, and get **quick recommendations**.
+- Shows a **list of perfumes**.
+- Lets a user **get recommendations** based on notes they like/avoid, brand, and price.
+- Lets an admin **add** a new perfume or **delete** an existing one.
+- Offers the same actions by **API** and **CLI**.
 
-There is a clear homepage on Heroku with links to both **HTML** and **JSON** views.
-
-### User Stories
-
-*First-time visitor goals*
-- Understand the main purpose of the app (browse/search perfumes and get recommendations).
-- Navigate quickly from the homepage to a readable list of perfumes.
-- Use a simple search (`/api/search?query=rose&price_max=80`) to find options.
-- Get basic recommendations (`/api/recommend?preferred=rose,vanilla`).
+This meets the Python Essentials brief: a data model, features to manage/query the data, input validation, and a working CLI/Web interface with deployment.
 
 ---
 
-## Features
+## Run locally
 
-### Existing Features
+**Requirements:** Python 3.12+ (3.13 works), pip, terminal.
 
-- **Homepage** with quick links:
-  - `/perfumes` — readable HTML table of the catalog  
-  - `/api/perfumes?pretty=1` — the same data in formatted JSON  
-  - `/api/search?query=...&brand=...&price_max=...` — filter results  
-  - `/api/recommend?preferred=note1,note2&avoid=...&price_max=...` — simple scoring based on notes/price  
-  - `/api/health` — health check (returns JSON `{status:"ok"}`)
-
-- **Readable JSON**: add `?pretty=1` to any API endpoint for nicely formatted output.
-
-- **Typer CLI (one-off on Heroku)**:
-  - `hello` smoke test (`heroku run python run.py hello --name Hollie --app <app>`).
-  - Structure is in place to add more admin commands (import/export, seeding, etc).
-
-- **Data storage**: JSON dataset with a small sample perfume catalog.
-
-![Homepage](./assets/readme/homepage.png)  
-![Perfumes HTML](./assets/readme/perfumes-table.png)  
-![Pretty JSON](./assets/readme/pretty-json.png)
-
----
-
-## Features Left To Implement
-
-- CLI commands to import/export CSV and seed/reset catalog.
-- Pagination for `/perfumes` when the dataset grows.
-- Save favourite notes per user.
-- Simple admin authentication for write routes.
-
----
-
-## Design
-
-- Simple, clean HTML with system fonts for accessibility and speed.
-- Minimal, predictable API with clear query parameters.
-- CLI commands grouped under a single Typer app with built-in help.
-
----
-
-## Technologies Used
-
-- Python 3.12  
-- Flask (web server & routes)  
-- Typer (command-line interface)  
-- Gunicorn (production WSGI server on Heroku)  
-- JSON files for data
-
----
-
-## Frameworks, Libraries & Programs Used
-
-- GitHub — version control & hosting  
-- Heroku — deployment  
-- Visual Studio Code — development  
-- Black & Ruff — formatting and linting  
-- Pytest — unit testing
-
----
-
-## Testing
-
-We validated code style and ran tests locally, and manually exercised the endpoints on Heroku.
-
-- `ruff check .` — no significant issues after the final pass  
-- `black .` — consistent formatting  
-- `pytest -q` — unit tests pass locally
-
-### Validation Results
-
-<details>
-<summary>Ruff & Black</summary>
-
-- Ruff fixed minor nits; Black formatted the codebase consistently.
-</details>
-
-<details>
-<summary>Pytest</summary>
-
-- All tests passed locally in the last run.
-</details>
-
-### Manual Testing
-
-- Visited `/` homepage, `/perfumes` HTML table.  
-- Confirmed JSON endpoints with and without `?pretty=1`.  
-- Searched by brand/notes, verified price filters.  
-- Checked `/api/health` returns `{ "status": "ok" }`.  
-- Ran CLI on dyno: `hello` prints a greeting.
-
-### Lighthouse Report
-
-*(Add screenshots once captured.)*
-
----
-
-## Deployment and local development
-
-### Heroku
-
-1. **Procfile**
-2. **Python version**
-3. **Deploy**
 ```bash
-git push heroku main
-heroku logs --tail --app <your-app-name>
-
-## Live App
-
-Live app:
-https://aromavault-eu-e54dae1bad1f.herokuapp.com/
-
-Forking the GitHub Repository
-
-Open the repository and click Fork.
-
-Work on your copy without affecting the original.
-
-Local Clone
-git clone <repo-url>
+# 1) Clone and enter
+git clone https://github.com/HollieMorrison/aromavault
 cd aromavault
+
+# 2) Create a virtual environment
 python -m venv .venv
 # Windows:
 .venv\Scripts\activate
 # macOS/Linux:
 source .venv/bin/activate
 
+# 3) Install requirements
 pip install -r requirements.txt
-# Development server:
-flask --app web run     # or: python web.py (dev only)
-# Visit:
-# http://127.0.0.1:5000/
 
-Running the CLI (one-off)
+# 4) Run the server locally
+python run.py
+# Open http://127.0.0.1:5000 in your browser
+Data is kept in data.json in the project root. Seeds are included so the list is never empty.
 
-On Heroku:
+CLI (Command Line)
+The CLI is defined in cli_app.py (Typer/Click).
 
-heroku run python run.py --help --app <your-app>
-heroku run python run.py hello --name Hollie --app <your-app>
+bash
+Copy code
+# Show commands
+python -m cli_app --help
 
+# Seed demo perfumes
+python -m cli_app seed-minimal
+# -> "Seeded 3 perfumes into data.json"
 
-Locally:
+# Add a perfume (name is positional; others are options)
+python -m cli_app add-perf "Rose Dusk" --brand Floral --price 55 --notes "rose,musk"
+# -> "Added 'Rose Dusk' by Floral (£55.0) to data.json"
+Tip: run pytest -q to check the provided tests.
 
-python run.py --help
-python run.py hello --name Hollie
+API (JSON)
+All endpoints live in web.py. Base URL is your local server or Heroku.
 
-Bug Fix Log (3 issues + resolutions)
-1) Heroku started Node/Total.js instead of Python
+List perfumes
+bash
+Copy code
+GET /api/perfumes
+GET /api/perfumes?pretty=1
+Search perfumes
+sql
+Copy code
+GET /api/search?query=rose&price_max=80
+Recommendations
+bash
+Copy code
+GET /api/recommend
+GET /api/recommend?preferred=rose,jasmine&avoid=vanilla&brand=Dior&price_max=120&k=5
+Admin add
+pgsql
+Copy code
+POST /api/admin/add
+Content-Type: application/json
+{
+  "name": "Citrus Spark",
+  "brand": "AromaVault",
+  "price": 39.5,
+  "notes": ["citrus", "bergamot", "musk"]
+}
+Admin delete
+pgsql
+Copy code
+POST /api/admin/delete
+Content-Type: application/json
+{ "id": "citrus-spark" }
+Quick cURL
+bash
+Copy code
+BASE="https://aromavault-eu-e54dae1bad1f.herokuapp.com"
 
-Symptom: Logs showed node index.js then node: command not found → app crashed.
+curl -s "$BASE/api/perfumes?pretty=1"
+curl -s "$BASE/api/search?query=rose"
+curl -s "$BASE/api/recommend?preferred=rose,jasmine&avoid=vanilla&k=5"
 
-Cause: A leftover Node scaffold and an old Procfile made Heroku detect/run Node.
+curl -s -X POST "$BASE/api/admin/add" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Citrus Spark","brand":"AromaVault","price":39.5,"notes":["citrus","bergamot","musk"]}'
 
-Fix: Removed the Node entrypoint and switched to Python:
+curl -s -X POST "$BASE/api/admin/delete" \
+  -H "Content-Type: application/json" \
+  -d '{"id":"citrus-spark"}'
+Web page (UI)
+The homepage (/) is a single HTML string inside web.py. It includes:
 
-Procfile → web: gunicorn web:app
+“Say hello” demo → /api/hello
 
-Kept Python buildpack only.
+Recommendations form → /api/recommend
 
-Result: Gunicorn boots, the web dyno stays up, and / serves the homepage.
+Admin Add/Delete → /api/admin/*
 
+A live All perfumes list → /api/perfumes
 
+If buttons don’t respond:
 
-2) Circular import between app.py and run.py
+open DevTools → Console to see JS/network errors,
 
-Symptom: Terminal page showed import/circular errors when loading the CLI.
+check Network tab to confirm APIs return 200.
 
-Cause: app.py imported run.py and run.py imported app.py.
+Data model (JSON file)
+data.json stores a list of perfume objects:
 
-Fix: Ensured app.py defines the Typer app and run.py only imports it:
+json
+Copy code
+{
+  "id": "floral-rose-dusk",
+  "name": "Rose Dusk",
+  "brand": "Floral",
+  "price": 55.0,
+  "notes": ["rose", "musk"],
+  "rating": 4.4,
+  "stock": 7,
+  "allergens": ["oakmoss"]
+}
+Rules
 
+id must be unique (auto-generated if missing).
 
-# app.py
-import typer
-app = typer.Typer(help="AromaVault command-line interface.")
+price must be numeric.
 
-# run.py
-from app import app
-if __name__ == "__main__":
-    app(prog_name="run.py")
+notes can be "rose,musk" or ["rose","musk"].
 
+How the recommender works (simple + explainable)
+Optional filters:
 
-Result: CLI imports cleanly with no circular reference.
+brand (case-insensitive match)
 
-3) Typer had no commands → “Missing command.”
+price_max (≤ max price)
 
-Symptom: Deployed terminal printed usage text with no commands; --help was not useful.
+Score:
 
-Cause: A Typer app existed but no commands were registered.
++1 for each preferred note
 
-Fix: Added a minimal command to prove the CLI wiring:
+−1 for each avoided note
 
-@app.command()
-def hello(name: str = "world"):
-    """Say hello (deployment smoke test)."""
-    print(f"Hello, {name}!")
+tie-break: cheaper first, then higher rating
 
+Return top k (default 10)
 
-Result: heroku run python run.py hello --name Hollie --app <app> prints a greeting; --help shows available commands.
+Validation & errors
+Required for add: name, brand, price, notes
+
+Types: price must be a number; notes list or comma-string
+
+Responses:
+
+success → {"ok": true, ...}
+
+bad input → {"ok": false, "error": "message"} (HTTP 400)
+
+not found on delete → HTTP 404
+
+Tech stack
+Python (Flask, Typer/Click)
+
+Gunicorn (Heroku)
+
+JSON file storage
+
+Black + Ruff (code quality)
+
+Pytest (tests)
+
+Assessment mapping (what this project covers)
+LO1 – Implement an algorithm
+
+Recommender + filtering implemented and explained; code formatted with Black.
+
+LO2 – Adapt/combine algorithms
+
+Scoring + filters + tie-breakers; input handling for empty/invalid cases.
+
+LO3 – Programming constructs
+
+Functions, modules, lists/dicts, loops, selection; error handling.
+
+LO4 – Explain program
+
+This README explains purpose, how to use, and how it works.
+
+LO5 – Find/fix errors
+
+Manual testing steps below; (add your own found/fixed notes).
+
+LO6 – Use libraries
+
+Flask (web/API), Typer (CLI), Gunicorn (serve).
+
+LO7 – Data model & logic
+
+JSON model with CRUD, search, recommend.
+
+LO8 – Version control
+
+Commits show incremental development.
+
+LO9 – Deployment
+
+Deployed to Heroku; public URL included; no commented-out code.
+
+Deployment (Heroku)
+Heroku uses the repo’s Procfile:
+
+makefile
+Copy code
+web: gunicorn web:app
+Already set up for this project. Typical flow:
+
+bash
+Copy code
+heroku create aromavault-eu
+heroku buildpacks:set heroku/python
+git push heroku main
+heroku open
+Note: Heroku’s filesystem is ephemeral. Seed data is provided so the app never boots empty. Admin add/delete is fine for demo but not permanent after dyno restarts.
+
+Linting & formatting
+bash
+Copy code
+black .
+ruff check .
+# optional auto-fix:
+ruff check . --fix
+                                        Add your latest run results here once you run them locally.
+
+Testing (fill these placeholders after you test)
+Keep this simple and honest. Replace ✅/❌ and add short notes.
+
+Manual API tests
+GET /api/perfumes → ✅/❌ (…notes…)
+
+GET /api/search?query=rose → ✅/❌ (…)
+
+GET /api/recommend?preferred=rose&avoid=vanilla → ✅/❌ (…)
+
+POST /api/admin/add (valid body) → ✅/❌ (…)
+
+POST /api/admin/delete (existing id) → ✅/❌ (…)
+
+Manual UI tests
+“Say hello” shows message → ✅/❌
+
+“Get recommendations” lists results → ✅/❌
+
+Admin “Add” shows new perfume → ✅/❌
+
+Admin “Delete” removes perfume → ✅/❌
+
+CLI tests
+python -m cli_app seed-minimal → ✅/❌
+
+python -m cli_app add-perf "Name" --brand B --price 10 --notes "x,y" → ✅/❌
+
+Automated tests (pytest)
+bash
+Copy code
+pytest -q
+                                                   Paste your outcome here, e.g.:
+
+Copy code
+12 passed in 0.42s
+Known issues / limitations
+Heroku file system resets on restart; fine for this project’s scope.
+
+Recommender is intentionally simple (easy to explain).
+
+Single-file HTML for clarity; bigger projects would split templates/static.
+
+Future improvements
+Edit endpoint (update price/stock/notes).
+
+Real DB (SQLite/Postgres) if persistence is needed.
+
+User auth for admin actions.
+
+Unit tests for validators and recommender.
+
+Add more demo perfumes (quick ways)
+Use the Admin Add form on the homepage, or
+
+Run the CLI add-perf command, or
+
+Manually add to data.json (keep valid JSON).
 
 Credits
-Code
 
-README structure adapted from a previous project template and tailored for a CLI + API app.
-
-Typer & Flask docs for quick-start patterns.
-
-Content
-
-Sample perfume entries created for demonstration/testing.
-
-Media
-
-Placeholder screenshots in ./assets/readme/ (replace with real app captures).
-
-Acknowledgements
-
-Thanks to mentors/reviewers for deployment and structure feedback.
-
-Slack community for tips on Heroku Procfiles and Typer.
+Thanks to CodeInstitute and my mentor Mitko.
