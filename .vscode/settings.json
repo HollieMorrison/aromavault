@@ -1,7 +1,18 @@
 {
   "cSpell.words": [
-    "AromaVault", "aromavault", "CLI", "dataset", "endpoints", "favicon",
-    "gunicorn", "Heroku", "Jinja2", "JSON", "markdown", "Procfile", "pytest",
-    "recommender", "ruff", "typer", "uvicorn", "venv", "webapp", "Nocturne"
+    "AromaVault","aromavault","CLI","WSGI","dyno","buildpack","Procfile","Procfiles",
+    "gunicorn","Heroku","Jinja2","markdown","pytest","recommender","ruff","typer",
+    "uvicorn","venv","Nocturne","oakmoss","healthz","robots","tonka",
+    "colorama","iniconfig","mdurl","mypy","pathspec","platformdirs","pluggy",
+    "Pygments","shellingham","Werkzeug","favourite"
+  ],
+  "cSpell.ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.git/**",
+    "requirements*.txt",
+    "pyproject.toml",
+    ".ruff_cache/**",
+    ".pytest_cache/**"
   ]
 }
