@@ -1,10 +1,11 @@
 from __future__ import annotations
-from pathlib import Path
+
 import json
 import os
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any
 
-from flask import Flask, request, jsonify, Response
+from flask import Flask, Response, jsonify, request
 
 # Use the same DB file as the CLI
 import storage  # must expose DEFAULT_DB (a Path or str)
@@ -16,7 +17,8 @@ app = Flask(__name__)
 def _db_path() -> Path:
     return Path(storage.DEFAULT_DB)
 
-def _load() -> List[Dict[str, Any]]:
+
+def _load() -> list[dict[str, Any]]:
     p = _db_path()
     if not p.exists():
         return []
@@ -25,10 +27,12 @@ def _load() -> List[Dict[str, Any]]:
     except Exception:
         return []
 
-def _save(items: List[Dict[str, Any]]) -> None:
+
+def _save(items: list[dict[str, Any]]) -> None:
     p = _db_path()
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
 
 def _norm_name(s: str) -> str:
     return " ".join(s.strip().split()).lower()
@@ -39,10 +43,12 @@ def _norm_name(s: str) -> str:
 def api_list_perfumes():
     return jsonify(_load())
 
+
 @app.get("/api/hello")
 def api_hello():
     name = (request.args.get("name") or "there").strip()
     return jsonify({"message": f"Hello, {name}!"})
+
 
 @app.get("/api/recommend")
 def api_recommend():
@@ -56,13 +62,15 @@ def api_recommend():
     """
     items = _load()
 
-    preferred = [x.strip().lower() for x in (request.args.get("preferred") or "").split(",") if x.strip()]
+    preferred = [
+        x.strip().lower() for x in (request.args.get("preferred") or "").split(",") if x.strip()
+    ]
     avoid = [x.strip().lower() for x in (request.args.get("avoid") or "").split(",") if x.strip()]
     brand_bias = (request.args.get("brand") or "").strip().lower()
     price_max = request.args.get("price_max")
     k = int(request.args.get("k") or 5)
 
-    def score(p: Dict[str, Any]) -> float:
+    def score(p: dict[str, Any]) -> float:
         s = 0.0
         notes = [n.lower() for n in p.get("notes", [])]
         # +2 per preferred note present
@@ -78,7 +86,7 @@ def api_recommend():
             s += 1.0
         return s
 
-    filtered: List[Dict[str, Any]] = items
+    filtered: list[dict[str, Any]] = items
     if price_max:
         try:
             pm = float(price_max)
@@ -111,7 +119,9 @@ def api_admin_add():
 
     items = _load()
     # if exists, replace; else append
-    idx = next((i for i, p in enumerate(items) if _norm_name(p.get("name", "")) == _norm_name(name)), None)
+    idx = next(
+        (i for i, p in enumerate(items) if _norm_name(p.get("name", "")) == _norm_name(name)), None
+    )
     new_item = {
         "id": p_id(name, brand),
         "name": name,
@@ -151,16 +161,19 @@ def api_admin_delete():
 # Helpers for admin defaults (simple stubs)
 def p_id(name: str, brand: str) -> str:
     # simple deterministic id
-    base = f"{brand}:{name}".encode("utf-8")
+    base = f"{brand}:{name}".encode()
     import hashlib
+
     return hashlib.sha1(base).hexdigest()[:24]
 
-def p_allergens(notes: List[str]) -> List[str]:
+
+def p_allergens(notes: list[str]) -> list[str]:
     # trivial example: if oakmoss present, mark as allergen
     lowers = [n.lower() for n in notes]
     return ["oakmoss"] if "oakmoss" in lowers else []
 
-def p_stock(items: List[Dict[str, Any]], name: str) -> int:
+
+def p_stock(items: list[dict[str, Any]], name: str) -> int:
     # default 5; if replacing, preserve stock if present
     for p in items:
         if _norm_name(p.get("name", "")) == _norm_name(name):
@@ -170,7 +183,8 @@ def p_stock(items: List[Dict[str, Any]], name: str) -> int:
                 return 5
     return 5
 
-def p_rating(items: List[Dict[str, Any]], name: str) -> str:
+
+def p_rating(items: list[dict[str, Any]], name: str) -> str:
     # keep empty string if not previously set
     for p in items:
         if _norm_name(p.get("name", "")) == _norm_name(name):
@@ -188,7 +202,7 @@ def healthz():
 @app.get("/")
 def index():
     # single-file dark UI with Admin panel
-    html = f"""
+    html = """
 <!doctype html>
 <html lang="en">
 <head>
@@ -199,26 +213,26 @@ def index():
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root {{ --bg:#0b0e12; --panel:#141a22; --muted:#9fb1c1; --text:#eaf2f8; --accent:#7bd389; --danger:#ff7a7a; }}
-* {{ box-sizing: border-box; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }}
-body {{ margin:0; background:var(--bg); color:var(--text); }}
-.wrapper {{ max-width:1100px; margin:48px auto; padding:0 20px; }}
-.card {{ background:var(--panel); border:1px solid #1f2730; border-radius:14px; padding:22px; margin:18px 0; }}
-h1 {{ font-size:28px; margin:0 0 8px; }}
-h2 {{ font-size:20px; margin:0 0 12px; }}
-label {{ display:block; font-size:13px; color:var(--muted); margin:8px 0 6px; }}
-input, select {{ width:100%; background:#0f141a; color:var(--text); border:1px solid #273241; border-radius:10px; padding:10px 12px; }}
-button {{ background:var(--accent); color:#0a0f0c; font-weight:600; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; }}
-button.secondary {{ background:#243140; color:var(--text); }}
-button.danger {{ background:var(--danger); color:#250b0b; }}
-.row {{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }}
-small.muted {{ color:var(--muted); }}
-code.inline {{ background:#0f141a; padding:2px 6px; border-radius:6px; border:1px solid #273241; }}
-ul.clean {{ padding-left:16px; margin:8px 0; }}
-.table {{ width:100%; border-collapse:collapse; font-size:14px; }}
-.table th, .table td {{ border-bottom:1px solid #273241; padding:8px 6px; text-align:left; }}
-pre.json {{ background:#0f141a; padding:12px; border-radius:10px; border:1px solid #273241; max-height:260px; overflow:auto; }}
-@media (max-width: 800px) {{ .row {{ grid-template-columns:1fr; }} }}
+:root { --bg:#0b0e12; --panel:#141a22; --muted:#9fb1c1; --text:#eaf2f8; --accent:#7bd389; --danger:#ff7a7a; }
+* { box-sizing: border-box; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+body { margin:0; background:var(--bg); color:var(--text); }
+.wrapper { max-width:1100px; margin:48px auto; padding:0 20px; }
+.card { background:var(--panel); border:1px solid #1f2730; border-radius:14px; padding:22px; margin:18px 0; }
+h1 { font-size:28px; margin:0 0 8px; }
+h2 { font-size:20px; margin:0 0 12px; }
+label { display:block; font-size:13px; color:var(--muted); margin:8px 0 6px; }
+input, select { width:100%; background:#0f141a; color:var(--text); border:1px solid #273241; border-radius:10px; padding:10px 12px; }
+button { background:var(--accent); color:#0a0f0c; font-weight:600; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; }
+button.secondary { background:#243140; color:var(--text); }
+button.danger { background:var(--danger); color:#250b0b; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+small.muted { color:var(--muted); }
+code.inline { background:#0f141a; padding:2px 6px; border-radius:6px; border:1px solid #273241; }
+ul.clean { padding-left:16px; margin:8px 0; }
+.table { width:100%; border-collapse:collapse; font-size:14px; }
+.table th, .table td { border-bottom:1px solid #273241; padding:8px 6px; text-align:left; }
+pre.json { background:#0f141a; padding:12px; border-radius:10px; border:1px solid #273241; max-height:260px; overflow:auto; }
+@media (max-width: 800px) { .row { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -249,7 +263,7 @@ pre.json {{ background:#0f141a; padding:12px; border-radius:10px; border:1px sol
     </div>
     <details style="margin-top:12px;">
       <summary>Show JSON</summary>
-      <pre id="helloOut" class="json">{{}}</pre>
+      <pre id="helloOut" class="json">{}</pre>
     </details>
   </div>
 
@@ -338,14 +352,14 @@ pre.json {{ background:#0f141a; padding:12px; border-radius:10px; border:1px sol
 </div>
 
 <script>
-async function sayHello() {{
+async function sayHello() {
   const name = document.getElementById('helloName').value.trim() || 'there';
-  const r = await fetch(`/api/hello?name=${{encodeURIComponent(name)}}`);
+  const r = await fetch(`/api/hello?name=${encodeURIComponent(name)}`);
   const j = await r.json();
   document.getElementById('helloOut').textContent = JSON.stringify(j, null, 2);
-}}
+}
 
-async function getRecs() {{
+async function getRecs() {
   const qs = new URLSearchParams();
   const pref = document.getElementById('pref').value.trim();
   const avoid = document.getElementById('avoid').value.trim();
@@ -357,51 +371,51 @@ async function getRecs() {{
   if (brand) qs.set('brand', brand);
   if (priceMax) qs.set('price_max', priceMax);
   qs.set('k', k);
-  const r = await fetch(`/api/recommend?${{qs.toString()}}`);
+  const r = await fetch(`/api/recommend?${qs.toString()}`);
   const j = await r.json();
   document.getElementById('recsOut').textContent = JSON.stringify(j, null, 2);
-}}
+}
 
-async function loadAll() {{
+async function loadAll() {
   const r = await fetch('/api/perfumes');
   const items = await r.json();
   document.getElementById('listOut').textContent = JSON.stringify(items, null, 2);
   const tbody = document.querySelector('#perfTable tbody');
   tbody.innerHTML = '';
-  items.forEach(p => {{
+  items.forEach(p => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${{p.name||''}}</td><td>${{p.brand||''}}</td><td>£${{p.price}}</td><td>${{(p.notes||[]).join(', ')}}</td>`;
+    tr.innerHTML = `<td>${p.name||''}</td><td>${p.brand||''}</td><td>£${p.price}</td><td>${(p.notes||[]).join(', ')}</td>`;
     tbody.appendChild(tr);
-  }});
-}}
+  });
+}
 
-async function addPerf() {{
+async function addPerf() {
   const name = document.getElementById('pName').value.trim();
   const brand = document.getElementById('pBrand').value.trim();
   const price = document.getElementById('pPrice').value.trim();
   const notes = document.getElementById('pNotes').value.trim();
-  const r = await fetch('/api/admin/add', {{
+  const r = await fetch('/api/admin/add', {
     method:'POST',
-    headers:{{'Content-Type':'application/json'}},
-    body: JSON.stringify({{name, brand, price, notes}})
-  }});
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name, brand, price, notes})
+  });
   const j = await r.json();
-  alert(j.ok ? `Saved: ${{j.item.name}} (${{j.action}})` : `Error: ${{j.error||'unknown'}}`);
+  alert(j.ok ? `Saved: ${j.item.name} (${j.action})` : `Error: ${j.error||'unknown'}`);
   await loadAll();
-}}
+}
 
-async function delPerf() {{
+async function delPerf() {
   const name = document.getElementById('pName').value.trim();
   if (!name) return alert('Enter a name to delete.');
-  const r = await fetch('/api/admin/delete', {{
+  const r = await fetch('/api/admin/delete', {
     method:'POST',
-    headers:{{'Content-Type':'application/json'}},
-    body: JSON.stringify({{name}})
-  }});
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name})
+  });
   const j = await r.json();
-  alert(j.ok ? `Removed: ${{j.removed}}` : `Error: ${{j.error||'unknown'}}`);
+  alert(j.ok ? `Removed: ${j.removed}` : `Error: ${j.error||'unknown'}`);
   await loadAll();
-}}
+}
 
 loadAll();
 </script>
