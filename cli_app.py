@@ -4,11 +4,8 @@ import json
 from typing import List
 import typer
 
-# The tests monkeypatch storage.DEFAULT_DB, so we import it and use that path.
-try:
-    import storage  # must define DEFAULT_DB (Path-like)
-except Exception as e:
-    raise RuntimeError("storage module is required for CLI tests") from e
+# The tests monkeypatch storage.DEFAULT_DB, so we import it and use that.
+import storage  # must define DEFAULT_DB (Path-like)
 
 app = typer.Typer(help="AromaVault command-line interface.")
 
@@ -20,7 +17,7 @@ def _read_list(p: Path) -> List[dict]:
         return []
     with p.open("r", encoding="utf-8") as f:
         data = json.load(f)
-    # be tolerant: allow either a list or a dict with 'perfumes'
+    # allow either a list or a dict with 'perfumes'
     if isinstance(data, dict):
         return list(data.get("perfumes", []))
     return list(data)
