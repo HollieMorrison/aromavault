@@ -7,8 +7,8 @@ import typer
 # Tests monkeypatch storage.DEFAULT_DB, so we **must** import storage and use that path.
 import storage  # must expose DEFAULT_DB as a Path-like
 
-app = typer.Typer(
-    name="aromavault",           # gives CliRunner a default prog name
+# Build the Typer app internally...
+_typer_app = typer.Typer(
     help="AromaVault command-line interface.",
     no_args_is_help=True,
 )
@@ -21,7 +21,7 @@ def _read_list(p: Path) -> List[dict]:
         return []
     with p.open("r", encoding="utf-8") as f:
         data = json.load(f)
-    # Accept either a dict {"perfumes":[...]} or a bare list [...]
+    # Accept either {"perfumes":[...]} or a bare list [...]
     return data.get("perfumes", data) if isinstance(data, dict) else data
 
 def _write_list(p: Path, items: List[dict]) -> None:
@@ -29,7 +29,7 @@ def _write_list(p: Path, items: List[dict]) -> None:
     with p.open("w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
 
-@app.command("seed-minimal")
+@_typer_app.command("seed-minimal")
 def seed_minimal() -> None:
     """Seed 3 sample perfumes into storage.DEFAULT_DB (used by tests)."""
     db_path = Path(storage.DEFAULT_DB)
@@ -68,7 +68,7 @@ def seed_minimal() -> None:
     _write_list(db_path, items)
     typer.echo(f"Seeded {len(items)} perfumes into {db_path}")
 
-@app.command("add-perf")
+@_typer_app.command("add-perf")
 def add_perf(
     name: str = typer.Argument(..., help="Perfume name (positional)"),
     brand: str = typer.Option(..., "--brand", help="Brand name"),
@@ -92,5 +92,11 @@ def add_perf(
     _write_list(db_path, items)
     typer.echo(f"Added '{name}' by {brand} (£{price}) to {db_path}")
 
+# ...and export a Click command as `app` for tests/CliRunner:
+# (This avoids the 'Typer object has no attribute name' error.)
+from typer.main import get_command as _get_click_command
+app = _get_click_command(_typer_app)
+
 if __name__ == "__main__":
+    # Running directly: execute the Click command
     app()
