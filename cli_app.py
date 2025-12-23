@@ -13,8 +13,10 @@ _typer_app = typer.Typer(
     no_args_is_help=True,
 )
 
+
 def _ensure_parent(p: Path) -> None:
     p.parent.mkdir(parents=True, exist_ok=True)
+
 
 def _read_list(p: Path) -> List[dict]:
     if not p.exists():
@@ -24,10 +26,12 @@ def _read_list(p: Path) -> List[dict]:
     # Accept either {"perfumes":[...]} or a bare list [...]
     return data.get("perfumes", data) if isinstance(data, dict) else data
 
+
 def _write_list(p: Path, items: List[dict]) -> None:
     _ensure_parent(p)
     with p.open("w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
+
 
 @_typer_app.command("seed-minimal")
 def seed_minimal() -> None:
@@ -68,6 +72,7 @@ def seed_minimal() -> None:
     _write_list(db_path, items)
     typer.echo(f"Seeded {len(items)} perfumes into {db_path}")
 
+
 @_typer_app.command("add-perf")
 def add_perf(
     name: str = typer.Argument(..., help="Perfume name (positional)"),
@@ -92,11 +97,71 @@ def add_perf(
     _write_list(db_path, items)
     typer.echo(f"Added '{name}' by {brand} (£{price}) to {db_path}")
 
+
 # ...and export a Click command as `app` for tests/CliRunner:
 # (This avoids the 'Typer object has no attribute name' error.)
 from typer.main import get_command as _get_click_command
+
 app = _get_click_command(_typer_app)
 
 if __name__ == "__main__":
     # Running directly: execute the Click command
     app()
+
+from typer import Option
+
+
+def _load_db(path: Path) -> list[dict]:
+    if path.exists() and path.read_text(encoding="utf-8").strip():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return []
+
+
+def _save_db(path: Path, items: list[dict]) -> None:
+    path.write_text(json.dumps(items, indent=2), encoding="utf-8")
+
+
+@app.command("list-perf")
+def list_perf():
+    """
+    List all perfumes in the database.
+    """
+    db_path = Path(storage.DEFAULT_DB)
+    data = _load_db(db_path)
+    if not data:
+        typer.echo("No perfumes found.")
+        raise typer.Exit(code=0)
+    for i, p in enumerate(data, 1):
+        notes = p.get("notes")
+        if isinstance(notes, list):
+            notes = ",".join(notes)
+        typer.echo(
+            f"{i}. {p.get('name')} — {p.get('brand')} (£{p.get('price')}) [{notes}]"
+        )
+    typer.echo(f"\nTotal: {len(data)}")
+
+
+@app.command("delete-perf")
+def delete_perf(
+    name: str = typer.Argument(..., help="Exact perfume name to delete"),
+    all_matches: bool = Option(
+        False, "--all", help="Delete all matching names (not just the first)"
+    ),
+):
+    """
+    Delete perfume(s) by exact name match.
+    """
+    db_path = Path(storage.DEFAULT_DB)
+    data = _load_db(db_path)
+    if not data:
+        typer.echo("Database empty; nothing to delete.")
+        raise typer.Exit(code=0)
+    kept = []
+    removed = 0
+    for p in data:
+        if p.get("name") == name and (all_matches or removed == 0):
+            removed += 1
+            continue
+        kept.append(p)
+    _save_db(db_path, kept)
+    typer.echo(f"Removed {removed} item(s) named '{name}'.")
