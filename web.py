@@ -420,7 +420,129 @@ async function delPerf() {
 loadAll();
 </script>
 
+
+<script>
+// AROMAVAULT JS START
+function $(sel){ return document.querySelector(sel); }
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ""; }
+
+async function helloHandler(){
+  const nameEl = document.getElementById('hello-name');
+  const name = nameEl && nameEl.value.trim() ? nameEl.value.trim() : 'there';
+  const r = await fetch(`/api/hello?name=${encodeURIComponent(name)}`);
+  const j = await r.json().catch(()=>({error:'bad json'}));
+  const out = document.getElementById('hello-json');
+  if(out) out.textContent = JSON.stringify(j, null, 2);
+}
+
+async function refreshPerfumeList(){
+  // If you already render a perfumes table elsewhere, you can update it here.
+  // For now we just call the endpoint to ensure it works.
+  try { await fetch('/api/perfumes'); } catch(e) {}
+}
+
+async function recommendHandler(){
+  const params = new URLSearchParams();
+  const pref = val('rec-preferred');
+  const avoid = val('rec-avoid');
+  const brand = val('rec-brand');
+  const pmax = val('rec-price-max');
+  const k = val('rec-k') || '5';
+  if(pref) params.set('preferred', pref);
+  if(avoid) params.set('avoid', avoid);
+  if(brand) params.set('brand', brand);
+  if(pmax) params.set('price_max', pmax);
+  params.set('k', k);
+
+  const r = await fetch(`/api/recommend?${params.toString()}`);
+  const j = await r.json().catch(()=>({error:'bad json'}));
+  const raw = document.getElementById('rec-json');
+  if(raw) raw.textContent = JSON.stringify(j, null, 2);
+
+  const list = document.getElementById('rec-list');
+  if(list){
+    list.innerHTML = '';
+    const items = Array.isArray(j) ? j : (j.items || []);
+    items.forEach((it, i) => {
+      const li = document.createElement('li');
+      const cur = it.price_currency || '£';
+      li.innerHTML = `<strong>${i+1}. ${it.name||'Unknown'}</strong> • ${it.brand||'—'} • ${cur}${it.price ?? ''}`;
+      list.appendChild(li);
+    });
+  }
+}
+
+async function adminAddHandler(){
+  const name = val('admin-name');
+  const brand = val('admin-brand');
+  const price = val('admin-price');
+  const notes = val('admin-notes');
+
+  const payload = {
+    name,
+    brand,
+    // coerce price to number if present
+    price: price ? Number(price) : None,
+    // send notes as array if user typed comma-separated
+    notes: notes ? notes.split(',').map(s => s.trim()).filter(Boolean) : []
+  };
+
+  // Remove undefined-ish values so backend doesn't choke
+  Object.keys(payload).forEach(k => {
+    if (payload[k] === None || payload[k] === '' || (Array.isArray(payload[k]) && payload[k].length === 0)) {
+      delete payload[k];
+    }
+  });
+
+  const r = await fetch('/api/admin/add', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+
+  const j = await r.json().catch(()=>({ok:false, error:'bad json'}));
+  const out = document.getElementById('admin-json');
+  if(out) out.textContent = JSON.stringify(j, null, 2);
+
+  if(r.ok){ await refreshPerfumeList(); }
+}
+
+// Supports either /api/admin/delete?id=... or /api/admin/delete/<id>
+async function adminDeleteHandler(){
+  const id = val('admin-del-id');
+  if(!id) return;
+
+  // Try query-param first
+  let r = await fetch(`/api/admin/delete?id=${encodeURIComponent(id)}`, { method:'DELETE' });
+  if(r.status === 404 || r.status === 405){
+    // try path style
+    r = await fetch(`/api/admin/delete/${encodeURIComponent(id)}`, { method:'DELETE' });
+  }
+
+  const j = await r.json().catch(()=>({ok:false, error:'bad json'}));
+  const out = document.getElementById('admin-json');
+  if(out) out.textContent = JSON.stringify(j, null, 2);
+
+  if(r.ok){ await refreshPerfumeList(); }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const bHello = document.getElementById('btn-hello');
+  if(bHello) bHello.addEventListener('click', e => { e.preventDefault(); helloHandler(); });
+
+  const bRec = document.getElementById('btn-recommend');
+  if(bRec) bRec.addEventListener('click', e => { e.preventDefault(); recommendHandler(); });
+
+  const bAdd = document.getElementById('btn-admin-add');
+  if(bAdd) bAdd.addEventListener('click', e => { e.preventDefault(); adminAddHandler(); });
+
+  const bDel = document.getElementById('btn-admin-del');
+  if(bDel) bDel.addEventListener('click', e => { e.preventDefault(); adminDeleteHandler(); });
+});
+// AROMAVAULT JS END
+</script>
 </body>
+
 </html>
     """
     return Response(html, mimetype="text/html")
