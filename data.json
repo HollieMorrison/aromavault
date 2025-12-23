@@ -1,6 +1,6 @@
 [
   {
-    "id": "51972348-6810-4cea-9840-9e0ac2c375fa",
+    "id": "seed-woodland-trail",
     "name": "Woodland Trail",
     "brand": "Earth&Oak",
     "price": 79.0,
@@ -9,12 +9,14 @@
       "cedar",
       "vetiver"
     ],
-    "allergens": "['oakmoss']",
-    "rating": "4.6",
-    "stock": "4"
+    "allergens": [
+      "oakmoss"
+    ],
+    "stock": 4,
+    "rating": 4.6
   },
   {
-    "id": "c657aed6-454a-4bbb-b045-68a2357c6002",
+    "id": "seed-night-bloom-xl",
     "name": "Night Bloom XL",
     "brand": "Nocturne",
     "price": 65.0,
@@ -23,12 +25,14 @@
       "amber",
       "musk"
     ],
-    "allergens": "['coumarin']",
-    "rating": "4.4",
-    "stock": "7"
+    "allergens": [
+      "coumarin"
+    ],
+    "stock": 7,
+    "rating": 4.4
   },
   {
-    "id": "f8ef47ea-6e1c-4287-b3b0-bfce30fd18de",
+    "id": "seed-rose-dusk",
     "name": "Rose Dusk",
     "brand": "Floral",
     "price": 55.0,
@@ -36,268 +40,21 @@
       "rose",
       "musk"
     ],
-    "allergens": "[]",
-    "rating": "",
-    "stock": "0"
+    "allergens": [],
+    "stock": 0,
+    "rating": 4.0
   },
   {
-    "id": "p001",
-    "name": "Dior J’adore Parfum d’eau",
-    "brand": "Dior",
-    "family": "Floral",
+    "id": "cli-floral-rose-dusk",
+    "name": "Rose Dusk",
+    "brand": "Floral",
+    "price": 55.0,
     "notes": [
-      "Jasmine",
-      "Magnolia",
-      "Neroli"
+      "rose",
+      "musk"
     ],
-    "concentration": "EDP",
-    "price": 110
-  },
-  {
-    "id": "p002",
-    "name": "Chanel Coco Mademoiselle",
-    "brand": "Chanel",
-    "family": "Chypre Floral",
-    "notes": [
-      "Orange",
-      "Jasmine",
-      "Patchouli"
-    ],
-    "concentration": "EDP",
-    "price": 132
-  },
-  {
-    "id": "p003",
-    "name": "YSL Libre",
-    "brand": "Yves Saint Laurent",
-    "family": "Floral",
-    "notes": [
-      "Lavender",
-      "Orange Blossom",
-      "Vanilla"
-    ],
-    "concentration": "EDP",
-    "price": 96
-  },
-  {
-    "id": "p004",
-    "name": "Lancôme La Vie Est Belle",
-    "brand": "Lancôme",
-    "family": "Gourmand Floral",
-    "notes": [
-      "Iris",
-      "Praline",
-      "Vanilla"
-    ],
-    "concentration": "EDP",
-    "price": 92
-  },
-  {
-    "id": "p005",
-    "name": "Marc Jacobs Daisy",
-    "brand": "Marc Jacobs",
-    "family": "Floral",
-    "notes": [
-      "Violet Leaf",
-      "Jasmine",
-      "Strawberry"
-    ],
-    "concentration": "EDT",
-    "price": 70
-  },
-  {
-    "id": "p006",
-    "name": "Tom Ford Black Orchid",
-    "brand": "Tom Ford",
-    "family": "Oriental Floral",
-    "notes": [
-      "Black Truffle",
-      "Orchid",
-      "Patchouli"
-    ],
-    "concentration": "EDP",
-    "price": 118
-  },
-  {
-    "id": "p007",
-    "name": "Jo Malone Peony & Blush Suede",
-    "brand": "Jo Malone London",
-    "family": "Floral",
-    "notes": [
-      "Peony",
-      "Red Apple",
-      "Suede"
-    ],
-    "concentration": "Cologne",
-    "price": 110
-  },
-  {
-    "id": "p008",
-    "name": "Maison Francis Kurkdjian Baccarat Rouge 540",
-    "brand": "MFK",
-    "family": "Amber Floral",
-    "notes": [
-      "Saffron",
-      "Amberwood",
-      "Cedar"
-    ],
-    "concentration": "EDP",
-    "price": 235
-  },
-  {
-    "id": "p009",
-    "name": "Armani Si",
-    "brand": "Giorgio Armani",
-    "family": "Chypre Fruity",
-    "notes": [
-      "Blackcurrant",
-      "Rose",
-      "Vanilla"
-    ],
-    "concentration": "EDP",
-    "price": 98
-  },
-  {
-    "id": "p010",
-    "name": "Dior Miss Dior (EDP)",
-    "brand": "Dior",
-    "family": "Floral",
-    "notes": [
-      "Rose",
-      "Peony",
-      "Musk"
-    ],
-    "concentration": "EDP",
-    "price": 115
-  },
-  {
-    "id": "p011",
-    "name": "Carolina Herrera Good Girl",
-    "brand": "Carolina Herrera",
-    "family": "Amber Floral",
-    "notes": [
-      "Tuberose",
-      "Jasmine",
-      "Tonka"
-    ],
-    "concentration": "EDP",
-    "price": 96
-  },
-  {
-    "id": "p012",
-    "name": "Viktor&Rolf Flowerbomb",
-    "brand": "Viktor&Rolf",
-    "family": "Floral",
-    "notes": [
-      "Tea",
-      "Jasmine",
-      "Patchouli"
-    ],
-    "concentration": "EDP",
-    "price": 110
-  },
-  {
-    "id": "p013",
-    "name": "Givenchy L’Interdit",
-    "brand": "Givenchy",
-    "family": "Floral Woody",
-    "notes": [
-      "Tuberose",
-      "Orange Blossom",
-      "Vetiver"
-    ],
-    "concentration": "EDP",
-    "price": 94
-  },
-  {
-    "id": "p014",
-    "name": "Mugler Alien",
-    "brand": "Mugler",
-    "family": "Amber Woody",
-    "notes": [
-      "Jasmine Sambac",
-      "Cashmeran",
-      "Amber"
-    ],
-    "concentration": "EDP",
-    "price": 97
-  },
-  {
-    "id": "p015",
-    "name": "Zara Femme",
-    "brand": "Zara",
-    "family": "Gourmand",
-    "notes": [
-      "Vanilla",
-      "Peony",
-      "Musk"
-    ],
-    "concentration": "EDP",
-    "price": 18
-  },
-  {
-    "id": "p016",
-    "name": "Essentials Rose Jam",
-    "brand": "Lush",
-    "family": "Floral Gourmand",
-    "notes": [
-      "Rose",
-      "Geranium",
-      "Vanilla"
-    ],
-    "concentration": "Body Spray",
-    "price": 30
-  },
-  {
-    "id": "p017",
-    "name": "Burberry Her",
-    "brand": "Burberry",
-    "family": "Fruity Floral",
-    "notes": [
-      "Strawberry",
-      "Blackberry",
-      "Musk"
-    ],
-    "concentration": "EDP",
-    "price": 96
-  },
-  {
-    "id": "p018",
-    "name": "Gucci Bloom",
-    "brand": "Gucci",
-    "family": "White Floral",
-    "notes": [
-      "Rangoon Creeper",
-      "Jasmine",
-      "Tuberose"
-    ],
-    "concentration": "EDP",
-    "price": 110
-  },
-  {
-    "id": "p019",
-    "name": "Dior Sauvage",
-    "brand": "Dior",
-    "family": "Aromatic Fougere",
-    "notes": [
-      "Bergamot",
-      "Ambroxan",
-      "Pepper"
-    ],
-    "concentration": "EDT",
-    "price": 96
-  },
-  {
-    "id": "p020",
-    "name": "Bleu de Chanel",
-    "brand": "Chanel",
-    "family": "Woody Aromatic",
-    "notes": [
-      "Grapefruit",
-      "Incense",
-      "Cedar"
-    ],
-    "concentration": "EDP",
-    "price": 120
+    "allergens": [],
+    "stock": 0,
+    "rating": 0.0
   }
 ]

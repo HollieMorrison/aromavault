@@ -5,6 +5,7 @@ from markupsafe import escape
 try:
     from recommender import recommend
     from storage import list_perfumes
+
     _import_error = None
 except Exception as e:
     recommend = None
@@ -160,18 +161,23 @@ HOMEPAGE = """<!doctype html>
 </html>
 """
 
+
 @app.get("/")
 def index():
     banner = ""
     if _import_error:
-        banner = "<div class='card'><div class='error'>Backend import error: {}</div></div>".format(escape(str(_import_error)))
+        banner = "<div class='card'><div class='error'>Backend import error: {}</div></div>".format(
+            escape(str(_import_error))
+        )
     html = HOMEPAGE.replace("{BANNER}", banner)
     return Response(html, mimetype="text/html")
+
 
 @app.get("/api/hello")
 def api_hello():
     name = request.args.get("name", "there")
     return jsonify({"message": f"Hello, {name}"})
+
 
 @app.get("/api/recommend")
 def api_recommend():
@@ -210,6 +216,20 @@ def api_recommend():
 
     return jsonify({"count": len(results), "results": results})
 
+
 @app.get("/healthz")
 def healthz():
     return jsonify({"ok": True, "imports_ok": _import_error is None})
+
+
+@app.get("/api/all")
+def api_all():
+    from pathlib import Path
+    import json
+    import storage
+
+    p = Path(storage.DEFAULT_DB)
+    items = (
+        json.loads(p.read_text("utf-8")) if p.exists() and p.read_text().strip() else []
+    )
+    return {"items": items, "count": len(items)}
