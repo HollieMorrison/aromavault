@@ -1,5 +1,7 @@
 from __future__ import annotations
 import click
+from dataclasses import asdict
+from models import Perfume
 import storage
 
 @click.group(name="aromavault")
@@ -20,13 +22,7 @@ def seed_minimal() -> None:
 def add_perf(name: str, brand: str, price: float, notes: str) -> None:
     """Add a perfume entry."""
     notes_list = [s.strip() for s in notes.split(",") if s.strip()] if notes else []
-    created = storage.add_perfume({
-        "name": name,
-        "brand": brand,
-        "price": price,
-        "notes": notes_list,
-        "rating": 0.0,
-        "stock": 0,
-        "allergens": [],
-    })
+    # Create via the same model constructor used in tests, then persist
+    p = Perfume.new(name, brand, float(price), notes_list, [], rating=0.0, stock=0)
+    created = storage.add_perfume(asdict(p))
     click.echo(f"Added: {created['id']}")
