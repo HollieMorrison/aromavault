@@ -542,9 +542,14 @@ window.addEventListener('DOMContentLoaded', () => {
 // AROMAVAULT JS END
 </script>
 
+
 <script>
-/* AROMA FIX v2 */
+/* AROMA FIX v3 — scope outputs to the nearest container (never <body>) */
 (function () {
+  function nearestContainer(el) {
+    // prefer a card/section-like wrapper; fallback to the button's parent
+    return el.closest('section, .card, .panel, .box, .container, .wrapper, .content') || el.parentElement || el;
+  }
   function ensureBox(section, id, initial) {
     let pre = section.querySelector('#' + id);
     if (!pre) {
@@ -566,7 +571,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const helloBtn = [...document.querySelectorAll('button')]
     .find(b => b.textContent.trim().toLowerCase() === 'say hello');
   if (helloBtn) {
-    const sec = helloBtn.closest('section') || document.body;
+    const sec = nearestContainer(helloBtn);
     const input = sec.querySelector('input');
     const pre = ensureBox(sec, 'hello-json', '{}');
     helloBtn.type = 'button';
@@ -582,7 +587,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const recBtn = [...document.querySelectorAll('button')]
     .find(b => b.textContent.trim().toLowerCase() === 'get recommendations');
   if (recBtn) {
-    const sec = recBtn.closest('section') || document.body;
+    const sec = nearestContainer(recBtn);
     const inputs = sec.querySelectorAll('input');
     const pre = ensureBox(sec, 'reco-json', '[]');
 
@@ -629,6 +634,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 })();
 </script>
+
 
 </body>
 
