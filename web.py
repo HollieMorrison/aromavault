@@ -152,7 +152,7 @@ def api_admin_add():
         "allergens": data.get("allergens") or [],
     }
 
-    ok, err = add_or_update_perfume(item)
+    ok, err = storage.add_or_update_perfume(item)
     status = 200 if ok else 400
     return jsonify({"ok": ok, "item": item, "error": err}), status
     name = (data.get("name") or "").strip()
