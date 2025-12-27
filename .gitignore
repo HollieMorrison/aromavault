@@ -65,3 +65,11 @@ storage.backup.*.py
 __pycache__/
 *.pyc
 *.pyo
+
+# Local backups & bytecode
+*.backup.*.py
+cli_app.backup.*.py
+storage.backup.*.py
+__pycache__/
+*.pyc
+*.pyo

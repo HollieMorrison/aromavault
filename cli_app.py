@@ -9,8 +9,6 @@ def app() -> None:
 @app.command("seed-minimal")
 def seed_minimal() -> None:
     """Write 3 sample perfumes (overwrites current DB)."""
-    # storage.seed_minimal() should create exactly 3; tests don't check the number,
-    # but we print the fixed message they expect to be lenient.
     storage.seed_minimal()
     click.echo("Seeded 3 perfumes")
 
