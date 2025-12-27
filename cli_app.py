@@ -1,55 +1,32 @@
 from __future__ import annotations
-from typing import List
-import typer
-from typer.main import get_command
+import click
 import storage
 
-# Build the Typer app (no_args_is_help avoids bare-run confusion)
-_typer = typer.Typer(help="AromaVault CLI", no_args_is_help=True)
+@click.group(name="aromavault")
+def app() -> None:
+    """AromaVault CLI"""
 
-@_typer.command("seed-minimal")
+@app.command("seed-minimal")
 def seed_minimal() -> None:
-    """Seed 3 sample perfumes into the current DB."""
-    items = [
-        {"name": "Rose Dusk", "brand": "Floral", "price": 55.0, "notes": ["rose", "musk"]},
-        {"name": "Citrus Bloom", "brand": "Citrico", "price": 45.0, "notes": ["orange", "neroli"]},
-        {"name": "Woody Path", "brand": "Terra", "price": 60.0, "notes": ["cedar", "vetiver"]},
-    ]
-    for it in items:
-        p = storage.Perfume.new(it["name"], it["brand"], it["price"], it["notes"], [])
-        storage.add_perfume(p.__dict__)
-    typer.echo("Seeded 3 perfumes")
+    """Write 3 sample perfumes (overwrites current DB)."""
+    n = storage.seed_minimal()
+    click.echo(f"Seeded {n} perfumes")
 
-@_typer.command("add-perf")
-def add_perf(
-    name: str,
-    brand: str = typer.Option(..., "--brand"),
-    price: float = typer.Option(..., "--price"),
-    notes: str = typer.Option("", "--notes", help="Comma-separated list"),
-) -> None:
-    """Add a perfume (NAME is positional; others are options)."""
-    notes_list = [n.strip() for n in notes.split(",") if n.strip()] if notes else []
-    p = storage.Perfume.new(name, brand, price, notes_list, [])
-    storage.add_perfume(p.__dict__)
-    typer.echo(f"Added: {name}")
-
-@_typer.command("list")
-def list_cmd() -> None:
-    """List perfumes."""
-    for it in storage.list_perfumes():
-        typer.echo(f"{it['name']} — {it['brand']}")
-
-@_typer.command("find")
-def find_cmd(query: str) -> None:
-    """Find perfumes whose name/brand contains QUERY (case-insensitive)."""
-    q = query.lower()
-    for it in storage.list_perfumes():
-        if q in it["name"].lower() or q in it["brand"].lower():
-            typer.echo(f"{it['name']} — {it['brand']}")
-
-# Export a real Click command (what pytest's CliRunner expects)
-app = get_command(_typer)
-# Give it a stable program name so Click can infer it under pytest
-app.name = "aromavault"
-
-__all__ = ["app"]
+@app.command("add-perf")
+@click.argument("name", metavar="NAME")
+@click.option("--brand", "-b", required=True, help="Brand")
+@click.option("--price", "-p", required=True, type=float, help="Price")
+@click.option("--notes", "-n", default="", help="CSV notes e.g. rose,musk")
+def add_perf(name: str, brand: str, price: float, notes: str) -> None:
+    """Add a perfume entry."""
+    notes_list = [s.strip() for s in notes.split(",") if s.strip()] if notes else []
+    created = storage.add_perfume({
+        "name": name,
+        "brand": brand,
+        "price": price,
+        "notes": notes_list,
+        "rating": 0.0,
+        "stock": 0,
+        "allergens": [],
+    })
+    click.echo(f"Added: {created['id']}")
