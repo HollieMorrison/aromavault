@@ -16,3 +16,26 @@ web.backup.*.py
 cli_app.backup.*.py
 storage.backup.*.py
 NUL
+# Backups
+*.backup.*.py
+web.backup.*.py
+cli_app.backup.*.py
+storage.backup.*.py
+NUL
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Test / tooling caches
+.pytest_cache/
+.ruff_cache/
+
+# Editor
+.vscode/
+
+# Local env & data
+.env
+db.json
+data.json
