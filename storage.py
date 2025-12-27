@@ -334,3 +334,76 @@ def import_csv(csv_path, path: Path | None = None, overwrite: bool = False) -> i
         save_all(list(by_id.values()), db_path)
 
     return ingested
+
+
+# ---- Aromavault in-memory store helpers (for web API) -----------------------
+try:
+    PERFUMES  # may already exist
+except NameError:
+    PERFUMES = []
+
+# If there’s a seed list present, populate once on import.
+if not PERFUMES:
+    for _seed_name in ("SEED_PERFUMES", "DEFAULT_PERFUMES"):
+        if _seed_name in globals() and isinstance(globals()[_seed_name], list):
+            PERFUMES = list(globals()[_seed_name])
+            break
+
+def _num(v, t=float, default=0.0):
+    try:
+        if isinstance(v, (int, float)): return t(v)
+        s = str(v).strip()
+        if s == "": return default
+        return t(float(s))
+    except Exception:
+        return default
+
+def _normalize_item(item: dict) -> dict:
+    it = dict(item or {})
+    it["id"] = str(it.get("id") or "").strip()
+    it["name"] = str(it.get("name") or "").strip()
+    it["brand"] = str(it.get("brand") or "").strip()
+
+    notes = it.get("notes")
+    if isinstance(notes, list):
+        it["notes"] = [str(n).strip() for n in notes if str(n).strip()]
+    else:
+        s = str(notes or "").strip()
+        it["notes"] = [t.strip() for t in s.split(",")] if s else []
+
+    it["price"]  = _num(it.get("price"),  float, 0.0)
+    it["rating"] = _num(it.get("rating"), float, 0.0)
+    it["stock"]  = int(_num(it.get("stock"), int, 0))
+
+    al = it.get("allergens", [])
+    if isinstance(al, list):
+        it["allergens"] = [str(a).strip() for a in al if str(a).strip()]
+    elif al:
+        it["allergens"] = [t.strip() for t in str(al).split(",") if t.strip()]
+    else:
+        it["allergens"] = []
+    return it
+
+def add_or_update_perfume(item: dict):
+    """Insert or update by 'id'. Returns (True, None) or (False, 'message')."""
+    it = _normalize_item(item)
+    if not it.get("id"):
+        return False, "Missing 'id'"
+    for i, x in enumerate(PERFUMES):
+        if isinstance(x, dict) and x.get("id") == it["id"]:
+            PERFUMES[i] = it
+            return True, None
+    PERFUMES.append(it)
+    return True, None
+
+def delete_perfume(pid: str):
+    pid = str(pid or "").strip()
+    if not pid:
+        return False, "Missing id"
+    before = len(PERFUMES)
+    PERFUMES[:] = [x for x in PERFUMES if not (isinstance(x, dict) and x.get("id") == pid)]
+    return (len(PERFUMES) < before), (None if len(PERFUMES) < before else "Not found")
+
+def get_all_perfumes():
+    return list(PERFUMES)
+# -----------------------------------------------------------------------------
