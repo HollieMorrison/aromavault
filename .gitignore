@@ -10,3 +10,9 @@ node_modules/
 __pycache__/
 .vscode/
 *.bak
+# local backups and artifacts
+*.backup.*.py
+web.backup.*.py
+cli_app.backup.*.py
+storage.backup.*.py
+NUL
