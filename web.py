@@ -157,7 +157,12 @@ def api_admin_add():
     return jsonify({"ok": ok, "item": item, "error": err}), status
     name = (data.get("name") or "").strip()
     brand = (data.get("brand") or "").strip()
-    price = (data.get("price") or "").strip()
+    price_raw = data.get("price")
+    try:
+        price = float(price_raw) if isinstance(price_raw, (int, float)) \
+            else float(str(price_raw).replace("£","").replace(",","").strip() or 0)
+    except Exception:
+        price = 0.0
     notes_raw = (data.get("notes") or "").strip()
 
     if not name or not brand or not price:
