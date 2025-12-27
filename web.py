@@ -12,6 +12,17 @@ import storage  # must expose DEFAULT_DB (a Path or str)
 
 app = Flask(__name__)
 
+# --- ensure we have data when the dyno (ephemeral FS) restarts ---------------
+def ensure_seed_on_boot():
+    try:
+        import storage
+        if not storage.list_perfumes():
+            storage.seed_minimal()
+    except Exception as e:
+        print("Boot seed skipped:", e)
+
+ensure_seed_on_boot()
+
 
 # ---------- Helpers ----------
 def _db_path() -> Path:
