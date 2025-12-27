@@ -1,6 +1,8 @@
 from __future__ import annotations
 from pathlib import Path
 import json
+from pathlib import Path
+
 from typing import List, Dict, Any
 
 # Test suite monkeypatches this, so keep the name and type.
@@ -115,6 +117,8 @@ def add_or_update_perfume(item: Dict[str, Any]) -> tuple[bool, str | None]:
 
 # === BEGIN: test-friendly JSON storage helpers (idempotent) =================
 import json
+from pathlib import Path
+
 from dataclasses import asdict
 
 def _db_path():
@@ -171,3 +175,59 @@ def delete_perfume(perfume_id: str):
         _write_all(new_items)
     return removed
 # === END: test-friendly JSON storage helpers =================================
+
+# ---- simple JSON storage helpers -------------------------------------------
+try:
+    DEFAULT_DB
+except NameError:
+    DEFAULT_DB = Path("db.json")
+
+def _load_db():
+    try:
+        data = json.loads(Path(DEFAULT_DB).read_text(encoding="utf-8"))
+        if isinstance(data, list):
+            return data
+        return []
+    except FileNotFoundError:
+        return []
+    except Exception:
+        return []
+
+def _save_db(items):
+    Path(DEFAULT_DB).write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+def list_perfumes():
+    return _load_db()
+
+def add_perfume(item):
+    items = _load_db()
+    items.append(item)
+    _save_db(items)
+    return item
+
+def update_perfume(pid, patch):
+    items = _load_db()
+    ok = False
+    for it in items:
+        if it.get("id") == pid or it.get("name") == pid:
+            it.update(patch)
+            ok = True
+            break
+    if ok: _save_db(items)
+    return ok
+
+def delete_perfume(pid):
+    items = _load_db()
+    new = [it for it in items if it.get("id") != pid and it.get("name") != pid]
+    changed = len(new) != len(items)
+    if changed: _save_db(new)
+    return changed
+
+def seed_minimal() -> int:
+    items = [
+        {"name":"Citrus Aurora","brand":"Sole","price":48.0,"notes":["bergamot","lemon","neroli"],"allergens":[],"rating":0.0,"stock":0},
+        {"name":"Rose Dusk","brand":"Floral","price":55.0,"notes":["rose","musk"],"allergens":[],"rating":0.0,"stock":0},
+        {"name":"Vetiver Line","brand":"Terra","price":67.0,"notes":["vetiver","grapefruit","pepper"],"allergens":[],"rating":0.0,"stock":0},
+    ]
+    _save_db(items)
+    return 3
