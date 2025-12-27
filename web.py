@@ -100,8 +100,61 @@ def api_recommend():
 
 # ---------- Admin API (new) ----------
 @app.post("/api/admin/add")
+
 def api_admin_add():
-    data = request.get_json(silent=True) or request.form
+    # Accept JSON or form-encoded
+    data = (request.get_json(silent=True) or {}) if request.is_json else {}
+    if not data:
+        data = request.form.to_dict(flat=True)
+
+    def norm_str(x):
+        if x is None: return ""
+        if isinstance(x, (int, float)): return str(x)
+        return str(x).strip()
+
+    def norm_float(x, default=0.0):
+        if isinstance(x, (int, float)): 
+            return float(x)
+        s = norm_str(x).replace("£","").replace(",","")
+        try:
+            return float(s) if s else default
+        except ValueError:
+            return default
+
+    def norm_int(x, default=0):
+        try:
+            return int(round(norm_float(x, default)))
+        except Exception:
+            return int(default)
+
+    def norm_notes(x):
+        if isinstance(x, list):
+            return [norm_str(n) for n in x if norm_str(n)]
+        s = norm_str(x)
+        return [t.strip() for t in s.split(",") if t.strip()] if s else []
+
+    pid   = norm_str(data.get("id")) or gen_id(norm_str(data.get("name")) or "perfume")
+    name  = norm_str(data.get("name"))
+    brand = norm_str(data.get("brand"))
+    price = norm_float(data.get("price"), default=0.0)
+    notes = norm_notes(data.get("notes"))
+    rating = norm_float(data.get("rating"), default=0.0)
+    stock  = norm_int(data.get("stock"), default=0)
+
+    item = {
+        "id": pid,
+        "name": name,
+        "brand": brand,
+        "price": price,
+        "notes": notes,
+        "rating": rating,
+        "stock": stock,
+        "allergens": data.get("allergens") or [],
+    }
+
+    ok, err = add_or_update_perfume(item)
+    status = 200 if ok else 400
+    return jsonify({"ok": ok, "item": item, "error": err}), status
     name = (data.get("name") or "").strip()
     brand = (data.get("brand") or "").strip()
     price = (data.get("price") or "").strip()
