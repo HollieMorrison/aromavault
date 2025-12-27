@@ -39,3 +39,13 @@ __pycache__/
 .env
 db.json
 data.json
+
+# Local backup/scratch files
+cli_app.backup.*.py
+web.backup.*.py
+storage.backup.*.py
+NUL
+*.pyc
+__pycache__/
+.db.json
+/db.json
