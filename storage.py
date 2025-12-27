@@ -179,9 +179,7 @@ def search_perfumes(
     path: Path | None = None,
 ) -> list[dict]:
     """Legacy name: search helper."""
-    return search(
-        query=query, brand=brand, notes_any=notes_any, price_max=price_max, path=path
-    )
+    return search(query=query, brand=brand, notes_any=notes_any, price_max=price_max, path=path)
 
 
 # ===== Profile compatibility (separate JSON file) =====
@@ -294,9 +292,7 @@ def import_csv(csv_path, path: Path | None = None, overwrite: bool = False) -> i
                 continue
             # Normalize keys and fields
             item = {
-                k.strip(): (v.strip() if isinstance(v, str) else v)
-                for k, v in row.items()
-                if k
+                k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items() if k
             }
 
             # Ensure required fields exist
@@ -310,9 +306,7 @@ def import_csv(csv_path, path: Path | None = None, overwrite: bool = False) -> i
                 # split on ';' primarily, fall back to ','
                 sep = ";" if ";" in notes_val else ("," if "," in notes_val else None)
                 item["notes"] = [
-                    s.strip()
-                    for s in (notes_val.split(sep) if sep else [notes_val])
-                    if s.strip()
+                    s.strip() for s in (notes_val.split(sep) if sep else [notes_val]) if s.strip()
                 ]
             elif isinstance(notes_val, list):
                 # already a list
