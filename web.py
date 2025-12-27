@@ -704,5 +704,21 @@ window.addEventListener('DOMContentLoaded', () => {
 # Heroku entry point
 app = app
 
+import storage as _storage
+# ---- storage shims (forwarders) ----
+def add_or_update_perfume(item):
+    return _storage.add_or_update_perfume(item)
+def delete_perfume(pid):
+    return _storage.delete_perfume(pid)
+def get_all_perfumes():
+    # some versions name this list_perfumes/get_perfumes
+    if hasattr(_storage, 'get_all_perfumes'):
+        return _storage.get_all_perfumes()
+    if hasattr(_storage, 'list_perfumes'):
+        return _storage.list_perfumes()
+    if hasattr(_storage, 'get_perfumes'):
+        return _storage.get_perfumes()
+    raise RuntimeError('No perfume listing function found in storage')
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
