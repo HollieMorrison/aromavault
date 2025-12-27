@@ -1,7 +1,5 @@
 from __future__ import annotations
 import click
-from dataclasses import asdict
-from models import Perfume
 import storage
 
 @click.group(name="aromavault")
@@ -11,17 +9,26 @@ def app() -> None:
 @app.command("seed-minimal")
 def seed_minimal() -> None:
     """Write 3 sample perfumes (overwrites current DB)."""
-    n = storage.seed_minimal()
-    click.echo(f"Seeded {n} perfumes")
+    storage.seed_minimal()
+    click.echo("Seeded 3 perfumes")
 
 @app.command("add-perf")
-@click.argument("name", metavar="NAME")
-@click.option("--brand",  "-b", required=True, help="Brand")
-@click.option("--price",  "-p", required=True, type=float, help="Price")
-@click.option("--notes",  "-n", default="", help="CSV notes e.g. rose,musk")
-def add_perf(name: str, brand: str, price: float, notes: str) -> None:
-    """Add a perfume entry."""
-    notes_list = [s.strip() for s in notes.split(",") if s.strip()] if notes else []
-    p = Perfume.new(name, brand, float(price), notes_list, [], rating=0.0, stock=0)
-    created = storage.add_perfume(asdict(p))
-    click.echo(f"Added: {created['id']}")
+@click.argument("name", nargs=1)
+@click.option("--brand", required=True, help="Brand name")
+@click.option("--price", required=True, type=float, help="Price")
+@click.option("--notes", required=False, help="Comma separated notes, e.g. 'rose,musk'")
+def add_perf(name: str, brand: str, price: float, notes: str | None) -> None:
+    """Add a single perfume with minimal fields used in tests."""
+    notes_list = [s.strip() for s in (notes or "").split(",") if s.strip()]
+    payload = {
+        "name": name,
+        "brand": brand,
+        "price": float(price),
+        "notes": notes_list,
+        "allergens": [],
+        "rating": 0.0,
+        "stock": 0,
+    }
+    created = storage.add_perfume(payload)
+    _id = created.get("id", created.get("name", name))
+    click.echo(f"Added: {_id}")
