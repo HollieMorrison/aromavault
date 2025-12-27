@@ -1,4 +1,6 @@
-import subprocess, sys
+import subprocess
+import sys
+
 
 def test_cli_help_exits_zero():
     cp = subprocess.run([sys.executable, "run.py", "--help"], capture_output=True, text=True)

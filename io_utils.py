@@ -1,5 +1,6 @@
-from pathlib import Path
 import json
+from pathlib import Path
+
 
 def read_json(path: Path) -> list[dict]:
     try:
@@ -9,6 +10,7 @@ def read_json(path: Path) -> list[dict]:
             return json.load(f)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in {path.name}: {e}") from e
+
 
 def write_json(path: Path, data: list[dict]) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")

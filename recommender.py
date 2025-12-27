@@ -4,9 +4,7 @@ from __future__ import annotations
 def _norm_set(values: list[str] | None) -> set[str]:
     if not values:
         return set()
-    return {
-        str(v).casefold().strip() for v in values if isinstance(v, str) and v.strip()
-    }
+    return {str(v).casefold().strip() for v in values if isinstance(v, str) and v.strip()}
 
 
 def score_perfume(
@@ -38,8 +36,7 @@ def score_perfume(
 
     # Brand bias
     if brand_bias and (
-        str(perfume.get("brand", "")).casefold().strip()
-        == brand_bias.casefold().strip()
+        str(perfume.get("brand", "")).casefold().strip() == brand_bias.casefold().strip()
     ):
         score += 1.0
 
@@ -50,9 +47,7 @@ def score_perfume(
             # If within budget, add a small bonus that grows as price is lower than max
             if price <= float(price_max):
                 # e.g., price_max 100, price 80 -> (100-80)/100 = 0.2
-                score += max(
-                    0.0, (float(price_max) - price) / max(1.0, float(price_max))
-                )
+                score += max(0.0, (float(price_max) - price) / max(1.0, float(price_max)))
             else:
                 # over budget slightly penalized
                 score -= 0.5
