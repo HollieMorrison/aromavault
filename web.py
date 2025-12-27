@@ -541,6 +541,95 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 // AROMAVAULT JS END
 </script>
+
+<script>
+/* AROMA FIX v2 */
+(function () {
+  function ensureBox(section, id, initial) {
+    let pre = section.querySelector('#' + id);
+    if (!pre) {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = 'Show JSON';
+      pre = document.createElement('pre');
+      pre.id = id;
+      pre.className = 'pre';
+      pre.textContent = initial || '';
+      details.appendChild(summary);
+      details.appendChild(pre);
+      section.appendChild(details);
+    }
+    return pre;
+  }
+
+  // ---- Hello button ----
+  const helloBtn = [...document.querySelectorAll('button')]
+    .find(b => b.textContent.trim().toLowerCase() === 'say hello');
+  if (helloBtn) {
+    const sec = helloBtn.closest('section') || document.body;
+    const input = sec.querySelector('input');
+    const pre = ensureBox(sec, 'hello-json', '{}');
+    helloBtn.type = 'button';
+    helloBtn.addEventListener('click', async () => {
+      const name = (input?.value || 'Hollie').trim();
+      const r = await fetch('/api/hello?name=' + encodeURIComponent(name));
+      const j = await r.json();
+      pre.textContent = JSON.stringify(j, null, 2);
+    });
+  }
+
+  // ---- Recommend button ----
+  const recBtn = [...document.querySelectorAll('button')]
+    .find(b => b.textContent.trim().toLowerCase() === 'get recommendations');
+  if (recBtn) {
+    const sec = recBtn.closest('section') || document.body;
+    const inputs = sec.querySelectorAll('input');
+    const pre = ensureBox(sec, 'reco-json', '[]');
+
+    let listBox = sec.querySelector('#reco-results');
+    if (!listBox) {
+      listBox = document.createElement('div');
+      listBox.id = 'reco-results';
+      listBox.className = 'list mt-2';
+      sec.appendChild(listBox);
+    }
+
+    recBtn.type = 'button';
+    recBtn.addEventListener('click', async () => {
+      const qs = new URLSearchParams();
+      const preferred = inputs[0]?.value?.trim() || '';
+      const avoid     = inputs[1]?.value?.trim() || '';
+      const brand     = inputs[2]?.value?.trim() || '';
+      const price     = inputs[3]?.value?.trim() || '';
+      const k         = inputs[4]?.value?.trim() || '10';
+      if (preferred) qs.set('preferred', preferred);
+      if (avoid)     qs.set('avoid', avoid);
+      if (brand)     qs.set('brand', brand);
+      if (price)     qs.set('price_max', price);
+      qs.set('k', k);
+
+      const r = await fetch('/api/recommend?' + qs.toString());
+      const j = await r.json();
+      pre.textContent = JSON.stringify(j, null, 2);
+
+      if (Array.isArray(j) && j.length) {
+        listBox.innerHTML = j.map(it =>
+          '<div class="item">' +
+            '<div class="item-title">' + (it.name || '') + '</div>' +
+            '<div class="item-sub">' +
+              (it.brand || '') + ' · £' + (it.price ?? '') + ' · ' +
+              (Array.isArray(it.notes) ? it.notes.join(', ') : '') +
+            '</div>' +
+          '</div>'
+        ).join('');
+      } else {
+        listBox.innerHTML = '<div class="muted">No results.</div>';
+      }
+    });
+  }
+})();
+</script>
+
 </body>
 
 </html>
