@@ -99,3 +99,13 @@ web.backup.*.py
 __pycache__/
 .pytest_cache/
 NUL
+
+# --- student cleanups ---
+cli_app.backup.*.py
+storage.backup.*.py
+web.backup.*.py
+*.pyc
+*.pyo
+__pycache__/
+.pytest_cache/
+NUL
