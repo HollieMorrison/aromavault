@@ -114,3 +114,8 @@ NUL
 web.bak.*.py
 cli_app.backup.*.py
 tmp-cli.json
+
+# Local backup files
+web.bak.*.py
+cli_app.backup.*.py
+tmp-cli.json
