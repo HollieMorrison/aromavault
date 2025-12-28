@@ -81,3 +81,11 @@ storage.backup.*.py
 __pycache__/
 *.pyc
 /db.json
+# backups & bytecode
+*.backup.*.py
+__pycache__/
+*.pyc
+*.pyo
+# local db
+db.json
+.db.json
