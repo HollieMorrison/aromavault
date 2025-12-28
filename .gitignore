@@ -109,3 +109,8 @@ web.backup.*.py
 __pycache__/
 .pytest_cache/
 NUL
+
+# Local backup files
+web.bak.*.py
+cli_app.backup.*.py
+tmp-cli.json
