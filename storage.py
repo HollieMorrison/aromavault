@@ -318,3 +318,63 @@ def seed_minimal() -> int:
     ]
     _save_db(items)
     return 3
+
+# ---- minimal JSON storage helpers used by CLI/tests ----
+from pathlib import Path
+import json
+from typing import Any, Dict, List
+
+try:
+    DEFAULT_DB
+except NameError:
+    DEFAULT_DB = Path("db.json")
+
+def _load() -> List[Dict[str, Any]]:
+    try:
+        data = json.loads(Path(DEFAULT_DB).read_text(encoding="utf-8"))
+        return data if isinstance(data, list) else []
+    except FileNotFoundError:
+        return []
+    except Exception:
+        return []
+
+def _save(items: List[Dict[str, Any]]) -> None:
+    Path(DEFAULT_DB).write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+def list_perfumes() -> List[Dict[str, Any]]:
+    return _load()
+
+def add_perfume(item: Dict[str, Any]) -> Dict[str, Any]:
+    items = _load()
+    # assign an id if not present
+    if "id" not in item or not item["id"]:
+        import uuid
+        item["id"] = str(uuid.uuid4())
+    items.append(item)
+    _save(items)
+    return item
+
+def update_perfume(pid: str, patch: Dict[str, Any]) -> bool:
+    items = _load()
+    ok = False
+    for it in items:
+        if it.get("id") == pid or it.get("name") == pid:
+            it.update(patch); ok = True; break
+    if ok: _save(items)
+    return ok
+
+def delete_perfume(pid: str) -> bool:
+    items = _load()
+    new = [it for it in items if it.get("id") != pid and it.get("name") != pid]
+    changed = len(new) != len(items)
+    if changed: _save(new)
+    return changed
+
+def seed_minimal() -> int:
+    items = [
+        {"name":"Citrus Aurora","brand":"Sole","price":48.0,"notes":["bergamot","lemon","neroli"],"allergens":[],"rating":0.0,"stock":0},
+        {"name":"Rose Dusk","brand":"Floral","price":55.0,"notes":["rose","musk"],"allergens":[],"rating":0.0,"stock":0},
+        {"name":"Vetiver Line","brand":"Terra","price":67.0,"notes":["vetiver","grapefruit","pepper"],"allergens":[],"rating":0.0,"stock":0},
+    ]
+    _save(items)
+    return 3
