@@ -1,5 +1,5 @@
-from flask import send_from_directory
 from __future__ import annotations
+from flask import send_from_directory
 
 import json
 import os
