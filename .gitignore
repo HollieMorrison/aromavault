@@ -89,3 +89,13 @@ __pycache__/
 # local db
 db.json
 .db.json
+
+# --- student cleanups ---
+cli_app.backup.*.py
+storage.backup.*.py
+web.backup.*.py
+*.pyc
+*.pyo
+__pycache__/
+.pytest_cache/
+NUL
