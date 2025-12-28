@@ -164,15 +164,3 @@ def list_perfumes_cmd(ctx):
         brand = it.get("brand", "")
         price = it.get("price", 0)
         click.echo(f"- {name} — {brand} (£{price})")
-
-
-@app.command("list-perfumes-cmd")
-def list_perfumes_cmd():
-    """List all perfumes (with header line 'Perfumes (N)')."""
-    items = storage.list_perfumes()
-    click.echo(f"Perfumes ({len(items)})")
-    for x in items:
-        notes = ",".join(x.get("notes") or [])
-        price = x.get("price", 0)
-        rating = float(x.get("rating", 0) or 0)
-        click.echo(f"{x['id']} | {x['name']} | {x['brand']} | £{price} | rating {rating} | {notes}")
