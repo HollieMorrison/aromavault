@@ -1,4 +1,5 @@
 from click.testing import CliRunner
+
 import cli_app
 
 runner = CliRunner()

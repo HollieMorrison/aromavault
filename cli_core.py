@@ -1,11 +1,16 @@
 from __future__ import annotations
-import click
+
 import sys as _sys
+
+import click
+
 import storage
+
 
 @click.group(name="aromavault")
 def app() -> None:
     """AromaVault CLI"""
+
 
 # Use default autohyphenation (seed_minimal -> seed-minimal)
 @app.command()
@@ -13,6 +18,7 @@ def seed_minimal() -> None:
     """Write 3 sample perfumes (overwrites current DB)."""
     n = storage.seed_minimal()
     click.echo(f"Seeded {n} perfumes")
+
 
 @app.command()
 @click.argument("name", nargs=1)
@@ -34,6 +40,7 @@ def add_perf(name: str, brand: str, price: float, notes: str | None) -> None:
     created = storage.add_perfume(payload)
     _id = created.get("id") or created.get("name") or name
     click.echo(f"Added: {_id}")
+
 
 # Make both hyphen and underscore names available defensively
 if "seed-minimal" not in app.commands and "seed_minimal" in app.commands:
