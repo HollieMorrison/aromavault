@@ -1,13 +1,14 @@
 from __future__ import annotations
 import click
+import sys
 import storage
 
-# Export a Click group named exactly `app`
+# Minimal Click group exported as `app`
 @click.group(name="aromavault")
 def app() -> None:
     """AromaVault CLI"""
 
-# Standalone command functions (not stacked decorators), then add to group.
+# Define commands WITHOUT stacking decorators on the group
 @click.command(name="seed-minimal")
 def seed_minimal() -> None:
     """Write 3 sample perfumes (overwrites current DB)."""
@@ -35,6 +36,21 @@ def add_perf(name: str, brand: str, price: float, notes: str | None) -> None:
     _id = created.get("id") or created.get("name") or name
     click.echo(f"Added: {_id}")
 
-# Explicitly register commands (avoids double-registration surprises)
-app.add_command(seed_minimal)
-app.add_command(add_perf)
+# Explicit registration
+app.add_command(seed_minimal, name="seed-minimal")
+app.add_command(add_perf, name="add-perf")
+
+# Redundant safety: if CI somehow missed, re-add with explicit names
+for _name, _cmd in (("seed-minimal", seed_minimal), ("add-perf", add_perf)):
+    if _name not in app.commands:
+        app.add_command(_cmd, name=_name)
+
+# Tiny import debug to stderr (pytest captures this on failure)
+try:
+    sys.stderr.write(
+        f"[cli_app import] commands={sorted(app.commands.keys())}\\n"
+    )
+except Exception:
+    pass
+
+__all__ = ["app"]
