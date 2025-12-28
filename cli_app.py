@@ -1,16 +1,21 @@
 from __future__ import annotations
+
 import click
+
 import storage
+
 
 @click.group(name="aromavault")
 def app() -> None:
     """AromaVault CLI"""
+
 
 @app.command("seed-minimal")
 def seed_minimal() -> None:
     """Write 3 sample perfumes (overwrites current DB)."""
     n = storage.seed_minimal()
     click.echo(f"Seeded {n} perfumes")
+
 
 @app.command("add-perf")
 @click.argument("name", nargs=1)
