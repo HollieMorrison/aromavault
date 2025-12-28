@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>AromaVault</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    h1 { margin-bottom: 8px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+    tr:hover { background: #fafafa; cursor: pointer; }
+    .card { border: 1px solid #eee; border-radius: 12px; padding: 16px; }
+    input, button { padding: 8px 10px; margin: 4px 0; }
+    .muted { color: #777; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>AromaVault</h1>
+  <p class="muted">Browse, view details, add, update, and delete perfumes.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>All Perfumes</h3>
+      <table id="tbl">
+        <thead><tr>
+          <th>Name</th><th>Brand</th><th>Price</th><th>Notes</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Details</h3>
+      <div id="details" class="muted">Click a row to view details…</div>
+      <hr/>
+      <h3>Add</h3>
+      <div>
+        <div class="row">
+          <input id="a-name"  placeholder="Name" />
+          <input id="a-brand" placeholder="Brand" />
+          <input id="a-price" placeholder="Price" type="number" step="0.01" />
+          <input id="a-notes" placeholder="Notes (comma-separated)" />
+        </div>
+        <button onclick="addPerf()">Add perfume</button>
+        <span id="add-msg" class="muted"></span>
+      </div>
+      <hr/>
+      <h3>Delete</h3>
+      <div class="row">
+        <input id="d-id" placeholder="ID to delete" />
+        <button onclick="delPerf()">Delete</button>
+      </div>
+      <div class="muted">Tip: copy ID from Details above.</div>
+    </div>
+  </div>
+
+  <script>
+    const tbody   = document.querySelector("#tbl tbody");
+    const details = document.getElementById("details");
+    const addMsg  = document.getElementById("add-msg");
+
+    async function load() {
+      const res = await fetch("/api/perfumes");
+      const items = await res.json();
+      tbody.innerHTML = "";
+      for (const it of items) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${it.name}</td>
+          <td>${it.brand}</td>
+          <td>£${Number(it.price).toFixed(2)}</td>
+          <td>${(it.notes||[]).join(", ")}</td>`;
+        tr.onclick = () => show(it.id);
+        tbody.appendChild(tr);
+      }
+    }
+
+    async function show(id) {
+      const res = await fetch(`/api/perfumes/${id}`);
+      if (!res.ok) { details.textContent = "Not found"; return; }
+      const it = await res.json();
+      details.innerHTML = `
+        <div><b>ID:</b> <code>${it.id}</code></div>
+        <div><b>Name:</b> ${it.name}</div>
+        <div><b>Brand:</b> ${it.brand}</div>
+        <div><b>Price:</b> £${Number(it.price).toFixed(2)}</div>
+        <div><b>Rating:</b> ${it.rating ?? 0}</div>
+        <div><b>Notes:</b> ${(it.notes||[]).join(", ")}</div>
+      `;
+      document.getElementById("d-id").value = it.id;
+    }
+
+    async function addPerf() {
+      const name  = document.getElementById("a-name").value.trim();
+      const brand = document.getElementById("a-brand").value.trim();
+      const price = document.getElementById("a-price").value;
+      const notes = document.getElementById("a-notes").value;
+      addMsg.textContent = "";
+
+      const res = await fetch("/api/admin/add", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ name, brand, price, notes })
+      });
+      const out = await res.json().catch(()=>({}));
+      if (!res.ok) { addMsg.textContent = out.error || "Add failed"; return; }
+      addMsg.textContent = "Added ✓";
+      await load();
+    }
+
+    async function delPerf() {
+      const id = document.getElementById("d-id").value.trim();
+      if (!id) return;
+      const res = await fetch("/api/admin/delete", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ id })
+      });
+      if (!res.ok) { alert("Delete failed"); return; }
+      details.textContent = "Deleted.";
+      await load();
+    }
+
+    load();
+  </script>
+</body>
+</html>

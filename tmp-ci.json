@@ -13,18 +13,6 @@
     "stock": 0
   },
   {
-    "name": "Rose Dusk",
-    "brand": "Floral",
-    "price": 55.0,
-    "notes": [
-      "rose",
-      "musk"
-    ],
-    "allergens": [],
-    "rating": 0.0,
-    "stock": 0
-  },
-  {
     "name": "Vetiver Line",
     "brand": "Terra",
     "price": 67.0,
@@ -38,16 +26,10 @@
     "stock": 0
   },
   {
-    "name": "Rose Dusk",
-    "brand": "Floral",
-    "price": 55.0,
-    "notes": [
-      "rose",
-      "musk"
-    ],
-    "allergens": [],
-    "rating": 0.0,
-    "stock": 0,
-    "id": "79b46bd8-a072-4f81-8ad7-52d6fa3b9616"
+    "name": "X",
+    "brand": "Y",
+    "price": 1.0,
+    "notes": [],
+    "id": "598b6f1d-1ca4-4ac0-bd48-f73c54ec296d"
   }
 ]
