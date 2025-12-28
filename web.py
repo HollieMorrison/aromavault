@@ -11,9 +11,10 @@ app.config.setdefault("SEEDED", False)
 def seed_once():
     if not app.config.get("SEEDED", False):
         if not storage.list_perfumes():
-            storage.seed_30()
-            app.logger.info("[boot] seeded 30 perfumes")
-        app.config["SEEDED"] = True
+        seeder = getattr(storage, "seed_30", None) or storage.seed_minimal
+        n = seeder()
+        app.logger.info(f"[boot] seeded {n} perfumes")
+    app.config["SEEDED"] = True
 
 @app.get("/")
 def home():
