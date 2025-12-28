@@ -1,3 +1,4 @@
+from flask import send_from_directory
 from __future__ import annotations
 
 import json
@@ -146,3 +147,8 @@ def api_admin_add():
     created = storage.add_perfume(item)
     return jsonify({"ok": True, "error": None, "item": created}), 200
 
+
+
+@app.get("/")
+def index():
+    return send_from_directory("static", "index.html")

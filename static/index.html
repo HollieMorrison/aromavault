@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AromaVault</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; }
+    h1 { margin-bottom: 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 1rem; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 1rem; }
+    .muted { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>AromaVault</h1>
+  <p class="muted">Loaded from <code>/api/perfumes</code>.</p>
+  <div id="grid" class="grid"></div>
+  <script>
+    async function load() {
+      const res = await fetch('/api/perfumes');
+      const data = await res.json();
+      const grid = document.getElementById('grid');
+      grid.innerHTML = (data ?? []).map(p => `
+        <div class="card">
+          <div><strong>${p.name ?? ''}</strong></div>
+          <div class="muted">${p.brand ?? ''}</div>
+          <div>£${(p.price ?? 0).toFixed(2)}</div>
+          <div class="muted">${(p.notes ?? []).join(', ')}</div>
+          <div class="muted">Stock: ${p.stock ?? 0} • Rating: ${p.rating ?? 0}</div>
+        </div>
+      `).join('');
+    }
+    load().catch(console.error);
+  </script>
+</body>
+</html>
