@@ -73,3 +73,11 @@ storage.backup.*.py
 __pycache__/
 *.pyc
 *.pyo
+
+# Local junk
+cli_app.backup.*.py
+storage.backup.*.py
+*_backup*.py
+__pycache__/
+*.pyc
+/db.json

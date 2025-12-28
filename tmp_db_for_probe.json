@@ -1,0 +1,40 @@
+[
+  {
+    "name": "Citrus Aurora",
+    "brand": "Sole",
+    "price": 48.0,
+    "notes": [
+      "bergamot",
+      "lemon",
+      "neroli"
+    ],
+    "allergens": [],
+    "rating": 0.0,
+    "stock": 0
+  },
+  {
+    "name": "Rose Dusk",
+    "brand": "Floral",
+    "price": 55.0,
+    "notes": [
+      "rose",
+      "musk"
+    ],
+    "allergens": [],
+    "rating": 0.0,
+    "stock": 0
+  },
+  {
+    "name": "Vetiver Line",
+    "brand": "Terra",
+    "price": 67.0,
+    "notes": [
+      "vetiver",
+      "grapefruit",
+      "pepper"
+    ],
+    "allergens": [],
+    "rating": 0.0,
+    "stock": 0
+  }
+]

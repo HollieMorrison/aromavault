@@ -1,0 +1,3 @@
+cli_app.__file__=C:\Users\holli\OneDrive\Documents\Projects\aromavault\cli_app.py
+python=3.13.0 (tags/v3.13.0:60403a5, Oct  7 2024, 09:38:07) [MSC v.1941 64 bit (AMD64)]
+commands=add-perf,add_perf,seed-minimal,seed_minimal

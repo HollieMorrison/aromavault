@@ -12,6 +12,17 @@ import storage  # must expose DEFAULT_DB (a Path or str)
 
 app = Flask(__name__)
 
+def _ensure_seed_on_boot():
+    try:
+        import storage
+        if not storage.list_perfumes():
+            storage.seed_minimal()
+            print("[boot] seeded minimal data")
+    except Exception as e:
+        print("[boot] seed skipped:", e)
+
+_ensure_seed_on_boot()
+
 # --- ensure we have data when the dyno (ephemeral FS) restarts ---------------
 def ensure_seed_on_boot():
     try:
@@ -147,10 +158,10 @@ def api_admin_add():
     pid   = norm_str(data.get("id")) or gen_id(norm_str(data.get("name")) or "perfume")
     name  = norm_str(data.get("name"))
     brand = norm_str(data.get("brand"))
-    price = norm_float(data.get("price"), default=0.0)
+    price = float(data.get("price", 0) or 0)
     notes = norm_notes(data.get("notes"))
     rating = norm_float(data.get("rating"), default=0.0)
-    stock  = norm_int(data.get("stock"), default=0)
+    stock = int(data.get("stock", 0) or 0)
 
     item = {
         "id": pid,
@@ -170,10 +181,10 @@ def api_admin_add():
     brand = (data.get("brand") or "").strip()
     price_raw = data.get("price")
     try:
-        price = float(price_raw) if isinstance(price_raw, (int, float)) \
+        price = float(data.get("price", 0) or 0)
             else float(str(price_raw).replace("£","").replace(",","").strip() or 0)
     except Exception:
-        price = 0.0
+        price = float(data.get("price", 0) or 0)
     notes_raw = (data.get("notes") or "").strip()
 
     if not name or not brand or not price:
@@ -461,7 +472,7 @@ async function loadAll() {
 async function addPerf() {
   const name = document.getElementById('pName').value.trim();
   const brand = document.getElementById('pBrand').value.trim();
-  const price = document.getElementById('pPrice').value.trim();
+  const price = float(data.get("price", 0) or 0)
   const notes = document.getElementById('pNotes').value.trim();
   const r = await fetch('/api/admin/add', {
     method:'POST',
@@ -544,7 +555,7 @@ async function recommendHandler(){
 async function adminAddHandler(){
   const name = val('admin-name');
   const brand = val('admin-brand');
-  const price = val('admin-price');
+  const price = float(data.get("price", 0) or 0)
   const notes = val('admin-notes');
 
   const payload = {
@@ -674,7 +685,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const preferred = inputs[0]?.value?.trim() || '';
       const avoid     = inputs[1]?.value?.trim() || '';
       const brand     = inputs[2]?.value?.trim() || '';
-      const price     = inputs[3]?.value?.trim() || '';
+      const price = float(data.get("price", 0) or 0)
       const k         = inputs[4]?.value?.trim() || '10';
       if (preferred) qs.set('preferred', preferred);
       if (avoid)     qs.set('avoid', avoid);
