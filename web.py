@@ -1,10 +1,14 @@
 from __future__ import annotations
-from pathlib import Path
-from flask import Flask, jsonify, request, Response
+
 import json
+from pathlib import Path
+
+from flask import Flask, Response, jsonify, request
+
 import storage
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
+
 
 # Seed once per dyno boot / first request (Flask 3 compatible)
 @app.before_request
@@ -15,6 +19,7 @@ def seed_once():
             n = seeder()
             app.logger.info(f"[boot] seeded {n} perfumes")
         app.config["SEEDED"] = True
+
 
 @app.get("/")
 def index() -> Response:
@@ -59,14 +64,17 @@ load();
 """
     return Response(html, mimetype="text/html")
 
+
 @app.get("/api/hello")
 def api_hello():
     return jsonify(ok=True)
+
 
 @app.get("/api/perfumes")
 def api_list():
     items = storage.list_perfumes()
     return jsonify(count=len(items), items=items)
+
 
 def _to_float(x):
     if isinstance(x, (int, float)):
@@ -80,16 +88,18 @@ def _to_float(x):
     except Exception:
         return 0.0
 
+
 def _to_int(x):
     try:
         return int(str(x).strip())
     except Exception:
         return 0
 
+
 @app.post("/api/admin/add")
 def api_admin_add():
     data = request.get_json(silent=True) or request.form or {}
-    name  = (data.get("name")  or "").strip()
+    name = (data.get("name") or "").strip()
     brand = (data.get("brand") or "").strip()
     notes = [s.strip() for s in (data.get("notes") or "").split(",") if s.strip()]
     payload = {
@@ -106,6 +116,7 @@ def api_admin_add():
     created = storage.add_perfume(payload)
     return jsonify(ok=True, item=created), 200
 
+
 @app.post("/api/admin/delete")
 def api_admin_delete():
     data = request.get_json(silent=True) or request.form or {}
@@ -114,6 +125,7 @@ def api_admin_delete():
         return jsonify(ok=False, error="id or name required"), 400
     ok = storage.delete_perfume(pid)
     return jsonify(ok=bool(ok)), 200
+
 
 if __name__ == "__main__":
     # local dev run
