@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AromaVault – Web CLI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b0d10; --fg:#e6edf3; --muted:#9aa4ad; --accent:#7bd389; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg); color: var(--fg); }
+    header { padding:16px; border-bottom:1px solid #1b2228; }
+    header h1 { margin:0 0 6px; font-size: 18px; }
+    header p { margin:0; color: var(--muted); font-size: 13px; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+    #term { background:#0f1317; border:1px solid #1b2228; border-radius: 8px; padding: 14px; min-height: 50vh; overflow:auto; white-space: pre-wrap; }
+    #prompt { display:flex; gap:8px; margin-top:10px; align-items:center; }
+    #ps1 { color: var(--accent); }
+    #cmd { flex:1; background:#0f1317; border:1px solid #1b2228; color:var(--fg); padding:10px 12px; border-radius:8px; outline:none; }
+    #cmd:focus { border-color:#2a3947; }
+    .hint { margin-top:8px; color:var(--muted); font-size:12px; }
+    .kbd { background:#11171c; border:1px solid #202b33; padding:2px 6px; border-radius:4px; }
+    .ok { color:#7bd389; }
+    .err { color:#ff8585; }
+    a { color:#71b7ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <h1>AromaVault – Web CLI</h1>
+    <p>Type a command and press <span class="kbd">Enter</span>. Allowed: <code>list</code>, <code>list-perfumes-cmd</code>, <code>find &lt;q&gt;</code>, <code>show &lt;q&gt;</code>, <code>add-perf "Name" --brand "Brand" --price 12.5 --notes "rose,musk"</code>, <code>delete &lt;name|id&gt;</code>, <code>seed-minimal</code>, <code>seed-30</code>.</p>
+  </header>
+  <main class="wrap">
+    <div id="term" aria-live="polite"></div>
+    <div id="prompt">
+      <span id="ps1">aromavault $</span>
+      <input id="cmd" placeholder='try: list' autocomplete="off" />
+    </div>
+    <p class="hint">Tip: Up/Down for history. This web CLI runs the same commands as your local CLI using your server’s JSON DB.</p>
+  </main>
+<script>
+(function(){
+  const term = document.getElementById('term');
+  const cmd  = document.getElementById('cmd');
+  const hist = []; let hIndex = -1;
+
+  function print(line, cls="") {
+    const span = document.createElement('div');
+    if (cls) span.className = cls;
+    span.textContent = line;
+    term.appendChild(span);
+    term.scrollTop = term.scrollHeight;
+  }
+
+  async function runCommand(raw) {
+    raw = (raw || "").trim();
+    if (!raw) return;
+    print("aromavault $ " + raw, "ok");
+    try {
+      const res = await fetch("/api/cli", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ args: raw })
+      });
+      const data = await res.json();
+      const out = (data && data.output) ? data.output : "(no output)";
+      print(out, data && data.ok ? "ok" : "err");
+    } catch(e) {
+      print("Error contacting server.", "err");
+    }
+  }
+
+  cmd.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = cmd.value;
+      hist.push(v); hIndex = hist.length;
+      cmd.value = "";
+      runCommand(v);
+    } else if (e.key === 'ArrowUp') {
+      if (hIndex > 0) { hIndex--; cmd.value = hist[hIndex]; e.preventDefault(); }
+    } else if (e.key === 'ArrowDown') {
+      if (hIndex < hist.length - 1) { hIndex++; cmd.value = hist[hIndex]; e.preventDefault(); }
+      else { hIndex = hist.length; cmd.value = ""; e.preventDefault(); }
+    }
+  });
+
+  // greet & auto list on load
+  print("Welcome to AromaVault Web CLI");
+  print("Type 'list' or 'find rose' to start.");
+  runCommand("list");
+})();
+</script>
+</body>
+</html>
