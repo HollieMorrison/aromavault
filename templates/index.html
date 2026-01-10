@@ -1,131 +1,249 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>AromaVault</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
-    h1 { margin-bottom: 8px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 8px 10px; border-bottom: 1px solid #eee; }
-    tr:hover { background: #fafafa; cursor: pointer; }
-    .card { border: 1px solid #eee; border-radius: 12px; padding: 16px; }
-    input, button { padding: 8px 10px; margin: 4px 0; }
-    .muted { color: #777; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+    :root{
+      --bg:#0b0d10; --panel:#0f1317; --border:#1b2228;
+      --fg:#e6edf3; --muted:#9aa4ad; --accent:#7bd389; --danger:#ff8585;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell}
+    header{padding:20px;border-bottom:1px solid var(--border)}
+    header h1{margin:0 0 8px}
+    header p{margin:0;color:var(--muted)}
+    main{max-width:1100px;margin:0 auto;padding:18px}
+    .bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    input[type="text"], input[type="number"]{
+      background:var(--panel);border:1px solid var(--border);color:var(--fg);
+      padding:10px 12px;border-radius:10px;outline:none;min-width:220px;
+    }
+    input[type="text"]:focus, input[type="number"]:focus{border-color:#2a3947}
+    button{
+      background:#1a2229;color:var(--fg);border:1px solid var(--border);
+      padding:10px 14px;border-radius:10px;cursor:pointer
+    }
+    button.primary{background:#1e2d24;border-color:#2c3a30;color:var(--accent)}
+    button.danger{background:#2a1717;border-color:#412424;color:var(--danger)}
+    table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+    th{background:#0d1014;text-align:left}
+    tr:last-child td{border-bottom:0}
+    .note{color:var(--muted);font-size:12px;margin-top:8px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:16px}
+    .modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;max-width:560px;width:100%;padding:16px}
+    .modal h3{margin:0 0 8px}
+    .kbd{background:#11171c;border:1px solid var(--border);padding:2px 6px;border-radius:4px}
+    .pill{display:inline-block;padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:#10161b;margin-right:6px;margin-bottom:4px}
+    .right{display:flex;gap:8px;align-items:center;margin-left:auto}
   </style>
 </head>
 <body>
-  <h1>AromaVault</h1>
-  <p class="muted">Browse, view details, add, update, and delete perfumes.</p>
+  <header>
+    <h1>AromaVault</h1>
+    <p>Interactive UI for browsing, searching, adding and deleting perfumes (backed by the same JSON DB used by the CLI).</p>
+  </header>
 
-  <div class="grid">
-    <div class="card">
-      <h3>All Perfumes</h3>
-      <table id="tbl">
-        <thead><tr>
-          <th>Name</th><th>Brand</th><th>Price</th><th>Notes</th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
+  <main>
+    <div class="bar">
+      <input id="q" type="text" placeholder="Search name, brand, notes…" />
+      <button id="btn-clear">Clear</button>
+      <div class="right">
+        <button id="btn-seed3">Seed 3</button>
+        <button id="btn-seed30">Seed 30</button>
+        <button id="btn-add" class="primary">Add / Update</button>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Details</h3>
-      <div id="details" class="muted">Click a row to view details…</div>
-      <hr/>
-      <h3>Add</h3>
-      <div>
-        <div class="row">
-          <input id="a-name"  placeholder="Name" />
-          <input id="a-brand" placeholder="Brand" />
-          <input id="a-price" placeholder="Price" type="number" step="0.01" />
-          <input id="a-notes" placeholder="Notes (comma-separated)" />
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th style="width:28%">Name</th>
+          <th style="width:16%">Brand</th>
+          <th style="width:10%">Rating</th>
+          <th>Notes</th>
+          <th style="width:12%">Price</th>
+          <th style="width:15%">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="note">Data is fetched from <span class="kbd">/api/perfumes</span>. Actions use <span class="kbd">/api/admin/add</span> and <span class="kbd">/api/admin/delete</span>.</div>
+  </main>
+
+  <!-- Add/Update Modal -->
+  <div class="modal-bg" id="modal-bg" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <h3 id="modal-title">Add / Update Perfume</h3>
+      <div class="grid">
+        <div>
+          <label>Name<br><input id="f-name" type="text" placeholder="Amber Sky"></label>
         </div>
-        <button onclick="addPerf()">Add perfume</button>
-        <span id="add-msg" class="muted"></span>
+        <div>
+          <label>Brand<br><input id="f-brand" type="text" placeholder="Noctis"></label>
+        </div>
+        <div>
+          <label>Price (£)<br><input id="f-price" type="number" step="0.01" placeholder="72"></label>
+        </div>
+        <div>
+          <label>Rating (0–5)<br><input id="f-rating" type="number" step="0.1" min="0" max="5" placeholder="4.2"></label>
+        </div>
+        <div style="grid-column:1 / -1">
+          <label>Notes (comma separated)<br><input id="f-notes" type="text" placeholder="amber, vanilla"></label>
+        </div>
+        <div>
+          <label>Stock<br><input id="f-stock" type="number" step="1" min="0" placeholder="2"></label>
+        </div>
       </div>
-      <hr/>
-      <h3>Delete</h3>
-      <div class="row">
-        <input id="d-id" placeholder="ID to delete" />
-        <button onclick="delPerf()">Delete</button>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <input id="f-replace" type="checkbox" /> <label for="f-replace">Replace if a perfume with the same <b>name</b> exists (delete then add)</label>
       </div>
-      <div class="muted">Tip: copy ID from Details above.</div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+        <button id="btn-cancel">Cancel</button>
+        <button id="btn-save" class="primary">Save</button>
+      </div>
     </div>
   </div>
 
-  <script>
-    const tbody   = document.querySelector("#tbl tbody");
-    const details = document.getElementById("details");
-    const addMsg  = document.getElementById("add-msg");
+<script>
+(function(){
+  const $ = (sel) => document.querySelector(sel);
+  const tbody = $('#tbody');
+  const q = $('#q');
 
-    async function load() {
-      const res = await fetch("/api/perfumes");
-      const items = await res.json();
-      tbody.innerHTML = "";
-      for (const it of items) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${it.name}</td>
-          <td>${it.brand}</td>
-          <td>£${Number(it.price).toFixed(2)}</td>
-          <td>${(it.notes||[]).join(", ")}</td>`;
-        tr.onclick = () => show(it.id);
-        tbody.appendChild(tr);
-      }
-    }
+  function money(n){ return new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'}).format(Number(n||0)); }
+  function tagList(notes){ return (notes||[]).map(n=>`<span class="pill">${n}</span>`).join(' '); }
 
-    async function show(id) {
-      const res = await fetch(`/api/perfumes/${id}`);
-      if (!res.ok) { details.textContent = "Not found"; return; }
-      const it = await res.json();
-      details.innerHTML = `
-        <div><b>ID:</b> <code>${it.id}</code></div>
-        <div><b>Name:</b> ${it.name}</div>
-        <div><b>Brand:</b> ${it.brand}</div>
-        <div><b>Price:</b> £${Number(it.price).toFixed(2)}</div>
-        <div><b>Rating:</b> ${it.rating ?? 0}</div>
-        <div><b>Notes:</b> ${(it.notes||[]).join(", ")}</div>
-      `;
-      document.getElementById("d-id").value = it.id;
-    }
+  async function fetchAll(){
+    const res = await fetch('/api/perfumes');
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.items || []);
+  }
 
-    async function addPerf() {
-      const name  = document.getElementById("a-name").value.trim();
-      const brand = document.getElementById("a-brand").value.trim();
-      const price = document.getElementById("a-price").value;
-      const notes = document.getElementById("a-notes").value;
-      addMsg.textContent = "";
+  function render(items){
+    const term = q.value.trim().toLowerCase();
+    const filtered = term ? items.filter(x=>{
+      const hay = [x.name||'', x.brand||'', (x.notes||[]).join(' ')].join(' ').toLowerCase();
+      return hay.includes(term);
+    }) : items;
 
-      const res = await fetch("/api/admin/add", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ name, brand, price, notes })
+    tbody.innerHTML = filtered.map(x => `
+      <tr data-id="${x.id||''}">
+        <td>${x.name||''}</td>
+        <td>${x.brand||''}</td>
+        <td>${(x.rating ?? 0).toFixed(1)}</td>
+        <td>${tagList(x.notes)}</td>
+        <td>${money(x.price)}</td>
+        <td>
+          <button class="danger" data-action="del" data-id="${x.id||''}" data-name="${x.name||''}">Delete</button>
+          <button data-action="use" data-name="${x.name||''}" data-brand="${x.brand||''}" data-price="${x.price||''}" data-rating="${x.rating||''}" data-notes="${(x.notes||[]).join(', ')}" data-stock="${x.stock||0}">Use in form</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function refresh(){
+    const items = await fetchAll();
+    render(items);
+  }
+
+  // seed helpers via web CLI API if present, else fallback message
+  async function runSeed(cmd){
+    try{
+      const r = await fetch('/api/cli', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({args: cmd})});
+      if (r.ok){ await refresh(); }
+    }catch(e){ console.warn('No /api/cli, or failed.'); }
+  }
+
+  tbody.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    if (action === 'del'){
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+      if (!confirm(`Delete "${name}"?`)) return;
+      const r = await fetch('/api/admin/delete', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id, name })
       });
-      const out = await res.json().catch(()=>({}));
-      if (!res.ok) { addMsg.textContent = out.error || "Add failed"; return; }
-      addMsg.textContent = "Added ✓";
-      await load();
+      const res = await r.json().catch(()=>({}));
+      alert((res && res.output) ? res.output.trim() : 'Delete attempted.');
+      await refresh();
+    } else if (action === 'use'){
+      // fill modal with row data
+      $('#f-name').value   = btn.dataset.name || '';
+      $('#f-brand').value  = btn.dataset.brand || '';
+      $('#f-price').value  = btn.dataset.price || '';
+      $('#f-rating').value = btn.dataset.rating || '';
+      $('#f-notes').value  = btn.dataset.notes || '';
+      $('#f-stock').value  = btn.dataset.stock || 0;
+      $('#f-replace').checked = false;
+      $('#modal-bg').style.display = 'flex';
+      $('#f-name').focus();
+    }
+  });
+
+  // search
+  q.addEventListener('input', refresh);
+  $('#btn-clear').addEventListener('click', ()=>{ q.value=''; refresh(); });
+
+  // seed buttons
+  $('#btn-seed3').addEventListener('click', ()=>runSeed('seed-minimal'));
+  $('#btn-seed30').addEventListener('click', ()=>runSeed('seed-30'));
+
+  // modal controls
+  $('#btn-add').addEventListener('click', ()=>{
+    $('#f-name').value='';
+    $('#f-brand').value='';
+    $('#f-price').value='';
+    $('#f-rating').value='';
+    $('#f-notes').value='';
+    $('#f-stock').value='0';
+    $('#f-replace').checked=false;
+    $('#modal-bg').style.display='flex';
+    $('#f-name').focus();
+  });
+  $('#btn-cancel').addEventListener('click', ()=> $('#modal-bg').style.display='none' );
+
+  // save (add or "update by name" if Replace is checked)
+  $('#btn-save').addEventListener('click', async ()=>{
+    const name = $('#f-name').value.trim();
+    const brand = $('#f-brand').value.trim();
+    const price = parseFloat($('#f-price').value||0);
+    const rating = parseFloat($('#f-rating').value||0);
+    const notes = ($('#f-notes').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const stock = parseInt($('#f-stock').value||'0',10);
+    const replace = $('#f-replace').checked;
+
+    if (!name || !brand){ alert('Name and Brand are required.'); return; }
+
+    if (replace){
+      await fetch('/api/admin/delete', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ name })
+      }).catch(()=>{});
     }
 
-    async function delPerf() {
-      const id = document.getElementById("d-id").value.trim();
-      if (!id) return;
-      const res = await fetch("/api/admin/delete", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ id })
-      });
-      if (!res.ok) { alert("Delete failed"); return; }
-      details.textContent = "Deleted.";
-      await load();
-    }
+    const resp = await fetch('/api/admin/add', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, brand, price, rating, notes, stock })
+    });
+    const data = await resp.json().catch(()=>({}));
+    alert((data && data.message) ? data.message : 'Saved.');
+    $('#modal-bg').style.display='none';
+    await refresh();
+  });
 
-    load();
-  </script>
+  // initial load
+  refresh();
+})();
+</script>
 </body>
 </html>

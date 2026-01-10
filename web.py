@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from click.testing import CliRunner
 from flask import Flask, Response, jsonify, request
 
+import cli_app
 import storage
 
+runner = CliRunner()
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 
 
