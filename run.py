@@ -12,19 +12,19 @@ Features:
 - Delete (by exact id or exact name)
 
 Uses the same JSON DB as the web app (storage.DEFAULT_DB).
-Screenshots to include in README: menu, list, add, update, delete, seed.
 """
 
 from __future__ import annotations
+
 import json
 import sys
 import uuid
 from pathlib import Path
 
-# Prefer your project's storage module if present
 DEFAULT_DB = Path("db.json")
 seeders: dict[str, callable] = {}
 
+# Prefer your project's storage module if present
 try:
     import storage  # type: ignore
 
@@ -32,9 +32,9 @@ try:
     if hasattr(storage, "seed_minimal"):
         seeders["minimal"] = storage.seed_minimal  # returns count
     if hasattr(storage, "seed_30"):
-        seeders["seed_30"] = storage.seed_30      # returns count
+        seeders["seed_30"] = storage.seed_30  # returns count
 except Exception:
-    # storage is optional; fallback to local helpers if missing
+    # storage is optional; fallback used if missing
     pass
 
 
@@ -68,9 +68,33 @@ def ensure_seeded() -> None:
         print(f"[auto-seed] wrote {n} perfumes (minimal)")
     else:
         fallback = [
-            {"id": str(uuid.uuid4()), "name": "Citrus Aurora", "brand": "Sole", "price": 48.0, "notes": ["bergamot","lemon","neroli"], "rating": 0.0, "stock": 0},
-            {"id": str(uuid.uuid4()), "name": "Rose Dusk", "brand": "Floral", "price": 55.0, "notes": ["rose","musk"], "rating": 0.0, "stock": 0},
-            {"id": str(uuid.uuid4()), "name": "Vetiver Line", "brand": "Terra", "price": 67.0, "notes": ["vetiver","grapefruit","pepper"], "rating": 0.0, "stock": 0},
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Citrus Aurora",
+                "brand": "Sole",
+                "price": 48.0,
+                "notes": ["bergamot", "lemon", "neroli"],
+                "rating": 0.0,
+                "stock": 0,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Rose Dusk",
+                "brand": "Floral",
+                "price": 55.0,
+                "notes": ["rose", "musk"],
+                "rating": 0.0,
+                "stock": 0,
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Vetiver Line",
+                "brand": "Terra",
+                "price": 67.0,
+                "notes": ["vetiver", "grapefruit", "pepper"],
+                "rating": 0.0,
+                "stock": 0,
+            },
         ]
         save_db(fallback)
         print("[auto-seed] wrote 3 perfumes (fallback)")
@@ -121,12 +145,15 @@ def pick_by_id_or_exact_name():
 
 # --- menu actions -------------------------------------------------------------
 
+
 def menu_list():
     items = load_db()
     print(f"Perfumes ({len(items)})")
     for x in items:
         notes = ",".join(x.get("notes") or [])
-        print(f"{x.get('id')} | {x.get('name')} | {x.get('brand')} | £{x.get('price',0):.2f} | rating {x.get('rating',0)} | {notes}")
+        print(
+            f"{x.get('id')} | {x.get('name')} | {x.get('brand')} | £{x.get('price',0):.2f} | rating {x.get('rating',0)} | {notes}"
+        )
 
 
 def menu_find():
@@ -150,7 +177,9 @@ def menu_find():
 def menu_show():
     key = input_nonempty("Enter ID or Name substring: ").lower()
     items = load_db()
-    results = [x for x in items if key in (x.get("id","").lower()) or key in (x.get("name","").lower())]
+    results = [
+        x for x in items if key in (x.get("id", "").lower()) or key in (x.get("name", "").lower())
+    ]
     if not results:
         print("Not found.")
         return
@@ -190,22 +219,34 @@ def menu_update():
     new_name = input(f"Name [{target.get('name')}]: ").strip() or target.get("name")
     new_brand = input(f"Brand [{target.get('brand')}]: ").strip() or target.get("brand")
     price_in = input(f"Price [{target.get('price',0)}]: ").strip()
-    new_price = target.get("price", 0) if not price_in else as_float(price_in, target.get("price", 0))
+    new_price = (
+        target.get("price", 0) if not price_in else as_float(price_in, target.get("price", 0))
+    )
     notes_in = input(f"Notes comma [{','.join(target.get('notes') or [])}]: ").strip()
-    new_notes = target.get("notes") if not notes_in else [n.strip() for n in notes_in.split(",") if n.strip()]
+    new_notes = (
+        target.get("notes")
+        if not notes_in
+        else [n.strip() for n in notes_in.split(",") if n.strip()]
+    )
     rating_in = input(f"Rating [{target.get('rating',0)}]: ").strip()
-    new_rating = target.get("rating", 0) if not rating_in else as_float(rating_in, target.get("rating", 0))
+    new_rating = (
+        target.get("rating", 0) if not rating_in else as_float(rating_in, target.get("rating", 0))
+    )
     stock_in = input(f"Stock [{target.get('stock',0)}]: ").strip()
-    new_stock = target.get("stock", 0) if not stock_in else int(as_float(stock_in, target.get("stock", 0)))
+    new_stock = (
+        target.get("stock", 0) if not stock_in else int(as_float(stock_in, target.get("stock", 0)))
+    )
 
-    target.update({
-        "name": new_name,
-        "brand": new_brand,
-        "price": new_price,
-        "notes": new_notes,
-        "rating": new_rating,
-        "stock": new_stock,
-    })
+    target.update(
+        {
+            "name": new_name,
+            "brand": new_brand,
+            "price": new_price,
+            "notes": new_notes,
+            "rating": new_rating,
+            "stock": new_stock,
+        }
+    )
     save_db(items)
     print("Updated.")
     show_perfume(target)
@@ -279,6 +320,7 @@ def main():
             print("\nInterrupted. Returning to menu.")
         except Exception as e:
             print(f"[Error] {e}")
+
 
 if __name__ == "__main__":
     try:
