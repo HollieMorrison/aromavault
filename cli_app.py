@@ -176,3 +176,49 @@ def list_perfumes_cmd():
         price = x.get("price", 0)
         rating = float(x.get("rating", 0) or 0)
         click.echo(f"{x['id']} | {x['name']} | {x['brand']} | £{price} | rating {rating} | {notes}")
+
+
+# ------------------------------------
+# UPDATE command (safe to append)
+# ------------------------------------
+import click
+
+import storage
+
+
+@app.command("update-perf")
+@click.argument("identifier", metavar="ID_OR_EXACT_NAME")
+@click.option("--name", help="New name")
+@click.option("--brand", help="New brand")
+@click.option("--price", type=float, help="New price (GBP)")
+@click.option("--notes", help='Comma-separated notes, e.g. "rose,musk"')
+@click.option("--rating", type=float, help="New rating 0.0–5.0")
+@click.option("--stock", type=int, help="New stock qty (>=0)")
+def update_perf_cmd(identifier, name, brand, price, notes, rating, stock):
+    """
+    Update a perfume by exact ID or exact Name.
+    Only fields provided will be updated.
+    """
+    updates = {
+        "name": name,
+        "brand": brand,
+        "price": price,
+        "rating": rating,
+        "stock": stock,
+    }
+    if notes is not None:
+        updates["notes"] = [n.strip() for n in notes.split(",") if n.strip()]
+
+    try:
+        updated = storage.update_perfume(identifier, **updates)
+    except ValueError as e:
+        click.echo(f"Error: {e}")
+        raise SystemExit(1)
+
+    # Pretty output (compact)
+    out_notes = ",".join(updated.get("notes") or [])
+    click.echo(
+        f"Updated: {updated.get('id','?')} | {updated.get('name','?')} | "
+        f"{updated.get('brand','?')} | £{updated.get('price',0)} | "
+        f"rating {updated.get('rating',0)} | {out_notes} | stock {updated.get('stock',0)}"
+    )
