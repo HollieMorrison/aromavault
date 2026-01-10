@@ -1,312 +1,174 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
+import shlex
 
 from click.testing import CliRunner
-from flask import Flask, Response, jsonify, render_template_string, request
+from flask import Flask, jsonify, render_template_string, request
 
 import cli_app
 import storage
 
+app = Flask(__name__, static_folder="static", template_folder="templates")
 runner = CliRunner()
-app = Flask(__name__, static_folder="static", static_url_path="/static")
+app.config.setdefault("SEEDED", False)
 
 
-# Seed once per dyno boot / first request (Flask 3 compatible)
+# ---------- seed-once (safe for Flask 3) ----------
 @app.before_request
 def seed_once():
-    if not app.config.get("SEEDED"):
-        if not storage.list_perfumes():
+    if app.config["SEEDED"]:
+        return
+    try:
+        items = storage.list_perfumes()
+        if not items:
             seeder = getattr(storage, "seed_30", None) or storage.seed_minimal
             n = seeder()
             app.logger.info(f"[boot] seeded {n} perfumes")
+    except Exception as e:
+        app.logger.warning(f"[boot] seeding skipped: {e}")
+    finally:
         app.config["SEEDED"] = True
 
 
-@app.get("/api/hello")
-def api_hello():
-    return jsonify(ok=True)
-
-
+# ---------- JSON API (kept compatible with your app) ----------
 @app.get("/api/perfumes")
-def api_list():
-    items = storage.list_perfumes()
-    return jsonify(count=len(items), items=items)
-
-
-def _to_float(x):
-    if isinstance(x, (int, float)):
-        return float(x)
-    if x is None:
-        return 0.0
-    s = str(x)
-    s = s.replace("£", "").replace(",", "").strip()
-    try:
-        return float(s) if s else 0.0
-    except Exception:
-        return 0.0
-
-
-def _to_int(x):
-    try:
-        return int(str(x).strip())
-    except Exception:
-        return 0
+def api_perfumes():
+    return jsonify(storage.list_perfumes())
 
 
 @app.post("/api/admin/add")
 def api_admin_add():
-    data = request.get_json(silent=True) or request.form or {}
+    data = request.get_json(force=True, silent=True) or {}
     name = (data.get("name") or "").strip()
     brand = (data.get("brand") or "").strip()
-    notes = [s.strip() for s in (data.get("notes") or "").split(",") if s.strip()]
-    payload = {
-        "name": name,
-        "brand": brand,
-        "price": _to_float(data.get("price")),
-        "notes": notes,
-        "allergens": data.get("allergens") or [],
-        "rating": _to_float(data.get("rating")),
-        "stock": _to_int(data.get("stock")),
-    }
-    if not name or not brand:
-        return jsonify(ok=False, error="name and brand are required"), 400
-    created = storage.add_perfume(payload)
-    return jsonify(ok=True, item=created), 200
+    price = float(data.get("price") or 0)
+    notes = data.get("notes") or []
+    if isinstance(notes, str):
+        notes = [s.strip() for s in notes.split(",") if s.strip()]
+    # delegate to storage to keep single source of truth:
+    rec = storage.add_perfume(name=name, brand=brand, price=price, notes=notes)
+    # rec might be id or dict depending on your storage; return something useful
+    return jsonify({"ok": True, "result": rec})
 
 
-@app.post("/api/admin/delete")
-def api_admin_delete():
-    data = request.get_json(silent=True) or request.form or {}
-    pid = (data.get("id") or data.get("name") or "").strip()
-    if not pid:
-        return jsonify(ok=False, error="id or name required"), 400
-    ok = storage.delete_perfume(pid)
-    return jsonify(ok=bool(ok)), 200
+# ---------- CLI bridge ----------
+@app.post("/api/cli")
+def api_cli():
+    data = request.get_json(silent=True) or {}
+    args = data.get("args") or data.get("cmd") or data.get("command") or ""
+    if isinstance(args, str):
+        s = args.strip()
+        argv = ["--help"] if s.lower() == "help" else (shlex.split(s) if s else [])
+    else:
+        argv = list(args)
+    res = runner.invoke(cli_app.app, argv)
+    out = (res.output or "").rstrip()
+    return jsonify(ok=(res.exit_code == 0), exit_code=res.exit_code, output=out)
 
 
-if __name__ == "__main__":
-    # local dev run
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
-
+# ---------- Terminal-style homepage ----------
 INDEX_HTML = r"""<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>AromaVault</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{--bg:#0b0d10;--panel:#0f1317;--border:#1b2228;--fg:#e6edf3;--muted:#9aa4ad;--accent:#7bd389;--danger:#ff8585}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell}
-    header{padding:20px;border-bottom:1px solid var(--border)}
-    header h1{margin:0 0 8px}
-    header p{margin:0;color:var(--muted)}
-    main{max-width:1100px;margin:0 auto;padding:18px}
-    .bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-    input[type="text"],input[type="number"]{background:var(--panel);border:1px solid var(--border);color:var(--fg);padding:10px 12px;border-radius:10px;outline:none;min-width:220px}
-    input[type="text"]:focus,input[type="number"]:focus{border-color:#2a3947}
-    button{background:#1a2229;color:var(--fg);border:1px solid var(--border);padding:10px 14px;border-radius:10px;cursor:pointer}
-    button.primary{background:#1e2d24;border-color:#2c3a30;color:var(--accent)}
-    button.danger{background:#2a1717;border-color:#412424;color:var(--danger)}
-    table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-    th,td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
-    th{background:#0d1014;text-align:left}
-    tr:last-child td{border-bottom:0}
-    .note{color:var(--muted);font-size:12px;margin-top:8px}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:16px}
-    .modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;max-width:560px;width:100%;padding:16px}
-    .modal h3{margin:0 0 8px}
-    .kbd{background:#11171c;border:1px solid var(--border);padding:2px 6px;border-radius:4px}
-    .pill{display:inline-block;padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:#10161b;margin-right:6px;margin-bottom:4px}
-    .right{display:flex;gap:8px;align-items:center;margin-left:auto}
-  </style>
+<meta charset="utf-8" />
+<title>AromaVault — Web Terminal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root{--bg:#0d1117;--panel:#0b0f14;--fg:#e6edf3;--muted:#9da7af;--green:#7bd389;--red:#ff8585;--blue:#86b7ff;--border:#1f2630}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{padding:18px 16px;border-bottom:1px solid var(--border)}
+header h1{margin:0 0 6px;font-size:18px}
+header p{margin:0;color:var(--muted);font-size:13px}
+main{max-width:1000px;margin:0 auto;padding:14px}
+.term{background:#0a0e13;border:1px solid var(--border);border-radius:10px;padding:12px;min-height:62vh;display:flex;flex-direction:column}
+.out{white-space:pre-wrap;word-break:break-word;flex:1 1 auto;overflow:auto;padding:4px}
+.promptline{display:flex;align-items:center;gap:8px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px}
+.prompt{color:var(--green)}
+input#cmd{flex:1;background:#0f141a;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:10px;outline:none}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+.btns{display:flex;gap:8px;margin:10px 0 0}
+button{background:#10161d;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer}
+button.primary{color:var(--green);border-color:#243026;background:#0f1512}
+.ok{color:var(--green)}
+.err{color:var(--red)}
+.blue{color:var(--blue)}
+.kbd{background:#0c1218;border:1px solid var(--border);padding:2px 6px;border-radius:4px}
+</style>
 </head>
 <body>
-  <header>
-    <h1>AromaVault</h1>
-    <p>Interactive UI for browsing, searching, adding and deleting perfumes (same JSON DB as the CLI).</p>
-  </header>
-
-  <main>
-    <div class="bar">
-      <input id="q" type="text" placeholder="Search name, brand, notes…" />
-      <button id="btn-clear">Clear</button>
-      <div class="right">
-        <button id="btn-seed3">Seed 3</button>
-        <button id="btn-seed30">Seed 30</button>
-        <button id="btn-add" class="primary">Add / Update</button>
-      </div>
+<header>
+  <h1>AromaVault — Web Terminal</h1>
+  <p>Try <span class="kbd">help</span>, <span class="kbd">list</span>, <span class="kbd">find rose</span>,
+     <span class="kbd">add-perf "Amber Sky" --brand "Noctis" --price 72 --notes "amber,vanilla"</span>,
+     <span class="kbd">delete "Amber Sky"</span>, <span class="kbd">seed-minimal</span>, <span class="kbd">seed-30</span>.
+     ↑/↓ for history, <span class="kbd">Ctrl+L</span> to clear.</p>
+</header>
+<main>
+  <div class="term">
+    <div id="out" class="out"></div>
+    <div class="promptline">
+      <span class="prompt">aromavault&gt;</span>
+      <input id="cmd" type="text" placeholder='Type "help" to see commands…' autocomplete="off" />
     </div>
-
-    <table id="tbl">
-      <thead>
-        <tr>
-          <th style="width:28%">Name</th>
-          <th style="width:16%">Brand</th>
-          <th style="width:10%">Rating</th>
-          <th>Notes</th>
-          <th style="width:12%">Price</th>
-          <th style="width:15%">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-    <div class="note">Data from <span class="kbd">/api/perfumes</span>. Actions use <span class="kbd">/api/admin/add</span> and <span class="kbd">/api/admin/delete</span>.</div>
-  </main>
-
-  <!-- Add/Update Modal -->
-  <div class="modal-bg" id="modal-bg" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal">
-      <h3 id="modal-title">Add / Update Perfume</h3>
-      <div class="grid">
-        <div><label>Name<br><input id="f-name" type="text" placeholder="Amber Sky"></label></div>
-        <div><label>Brand<br><input id="f-brand" type="text" placeholder="Noctis"></label></div>
-        <div><label>Price (£)<br><input id="f-price" type="number" step="0.01" placeholder="72"></label></div>
-        <div><label>Rating (0–5)<br><input id="f-rating" type="number" step="0.1" min="0" max="5" placeholder="4.2"></label></div>
-        <div style="grid-column:1 / -1"><label>Notes (comma separated)<br><input id="f-notes" type="text" placeholder="amber, vanilla"></label></div>
-        <div><label>Stock<br><input id="f-stock" type="number" step="1" min="0" placeholder="2"></label></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
-        <input id="f-replace" type="checkbox" /> <label for="f-replace">Replace if a perfume with the same <b>name</b> exists (delete then add)</label>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
-        <button id="btn-cancel">Cancel</button>
-        <button id="btn-save" class="primary">Save</button>
-      </div>
+    <div class="btns">
+      <button class="primary" id="btn-help">help</button>
+      <button id="btn-list">list</button>
+      <button id="btn-seed3">seed-minimal</button>
+      <button id="btn-seed30">seed-30</button>
+      <button id="btn-clear">clear</button>
     </div>
+    <div class="hint">This web terminal invokes the same Click CLI as your local app (server-side).</div>
   </div>
-
+</main>
 <script>
 (function(){
-  const $ = (sel) => document.querySelector(sel);
-  const tbody = $('#tbody');
-  const q = $('#q');
+  const out = document.getElementById('out');
+  const cmd = document.getElementById('cmd');
+  const log = (html)=>{ out.insertAdjacentHTML('beforeend', html); out.scrollTop = out.scrollHeight; };
+  const esc = (s)=>s.replace(/[&<>]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]));
+  log('<span class="blue">AromaVault CLI</span> — type <span class="kbd">help</span> to list commands.\\n');
 
-  function money(n){ return new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'}).format(Number(n||0)); }
-  function tagList(notes){ return (notes||[]).map(n=>`<span class="pill">${n}</span>`).join(' '); }
+  let history = []; let hIndex = -1;
 
-  async function fetchAll(){
-    const res = await fetch('/api/perfumes');
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.items || []);
-  }
-
-  function render(items){
-    const term = q.value.trim().toLowerCase();
-    const filtered = term ? items.filter(x=>{
-      const hay = [x.name||'', x.brand||'', (x.notes||[]).join(' ')].join(' ').toLowerCase();
-      return hay.includes(term);
-    }) : items;
-
-    tbody.innerHTML = filtered.map(x => `
-      <tr data-id="${x.id||''}">
-        <td>${x.name||''}</td>
-        <td>${x.brand||''}</td>
-        <td>${(x.rating ?? 0).toFixed(1)}</td>
-        <td>${tagList(x.notes)}</td>
-        <td>${money(x.price)}</td>
-        <td>
-          <button class="danger" data-action="del" data-id="${x.id||''}" data-name="${x.name||''}">Delete</button>
-          <button data-action="use" data-name="${x.name||''}" data-brand="${x.brand||''}" data-price="${x.price||''}" data-rating="${x.rating||''}" data-notes="${(x.notes||[]).join(', ')}" data-stock="${x.stock||0}">Use in form</button>
-        </td>
-      </tr>
-    `).join('');
-  }
-
-  async function refresh(){
-    const items = await fetchAll();
-    render(items);
-  }
-
-  async function runSeed(cmd){
+  async function run(input){
+    if(!input.trim()) return;
+    history.push(input); hIndex = history.length;
+    log('<span class="prompt">aromavault&gt;</span> '+esc(input)+'\\n');
+    const payload = { args: input.trim()==='help' ? '--help' : input };
     try{
-      const r = await fetch('/api/cli', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({args: cmd})});
-      if (r.ok){ await refresh(); }
-    }catch(e){ console.warn('No /api/cli, or failed.'); }
+      const res = await fetch('/api/cli', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      const ok = !!(data && data.ok);
+      const text = (data && data.output) ? data.output : '(no output)';
+      log('<div class="'+(ok?'ok':'err')+'">'+esc(text)+'</div>\\n');
+    }catch(e){ log('<div class="err">Request failed.</div>\\n'); }
   }
 
-  tbody.addEventListener('click', async (e)=>{
-    const btn = e.target.closest('button'); if (!btn) return;
-    const action = btn.dataset.action;
-    if (action === 'del'){
-      const id = btn.dataset.id, name = btn.dataset.name;
-      if (!confirm(\`Delete "\${name}"?\`)) return;
-      const r = await fetch('/api/admin/delete', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ id, name })
-      });
-      const res = await r.json().catch(()=>({}));
-      alert((res && res.output) ? res.output.trim() : 'Delete attempted.');
-      await refresh();
-    } else if (action === 'use'){
-      $('#f-name').value   = btn.dataset.name || '';
-      $('#f-brand').value  = btn.dataset.brand || '';
-      $('#f-price').value  = btn.dataset.price || '';
-      $('#f-rating').value = btn.dataset.rating || '';
-      $('#f-notes').value  = btn.dataset.notes || '';
-      $('#f-stock').value  = btn.dataset.stock || 0;
-      $('#f-replace').checked = false;
-      $('#modal-bg').style.display = 'flex';
-      $('#f-name').focus();
-    }
+  cmd.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter'){ run(cmd.value); cmd.value=''; }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); if(hIndex>0){ hIndex--; cmd.value=history[hIndex]||''; cmd.setSelectionRange(cmd.value.length, cmd.value.length);} }
+    else if(e.key === 'ArrowDown'){ e.preventDefault(); if(hIndex<history.length){ hIndex++; cmd.value=history[hIndex]||''; cmd.setSelectionRange(cmd.value.length, cmd.value.length);} }
+    else if(e.key.toLowerCase() === 'l' && e.ctrlKey){ e.preventDefault(); out.innerHTML=''; }
   });
 
-  q.addEventListener('input', refresh);
-  $('#btn-clear').addEventListener('click', ()=>{ q.value=''; refresh(); });
-
-  $('#btn-seed3').addEventListener('click', ()=>runSeed('seed-minimal'));
-  $('#btn-seed30').addEventListener('click', ()=>runSeed('seed-30'));
-
-  $('#btn-add').addEventListener('click', ()=>{
-    $('#f-name').value=''; $('#f-brand').value='';
-    $('#f-price').value=''; $('#f-rating').value='';
-    $('#f-notes').value=''; $('#f-stock').value='0';
-    $('#f-replace').checked=false;
-    $('#modal-bg').style.display='flex'; $('#f-name').focus();
-  });
-  $('#btn-cancel').addEventListener('click', ()=> $('#modal-bg').style.display='none' );
-
-  $('#btn-save').addEventListener('click', async ()=>{
-    const name = $('#f-name').value.trim();
-    const brand = $('#f-brand').value.trim();
-    const price = parseFloat($('#f-price').value||0);
-    const rating = parseFloat($('#f-rating').value||0);
-    const notes = ($('#f-notes').value||'').split(',').map(s=>s.trim()).filter(Boolean);
-    const stock = parseInt($('#f-stock').value||'0',10);
-    const replace = $('#f-replace').checked;
-
-    if (!name || !brand){ alert('Name and Brand are required.'); return; }
-
-    if (replace){
-      await fetch('/api/admin/delete', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ name })
-      }).catch(()=>{});
-    }
-
-    const resp = await fetch('/api/admin/add', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ name, brand, price, rating, notes, stock })
-    });
-    const data = await resp.json().catch(()=>({}));
-    alert((data && data.message) ? data.message : 'Saved.');
-    $('#modal-bg').style.display='none';
-    await refresh();
-  });
-
-  refresh();
+  document.getElementById('btn-help').onclick = ()=> run('help');
+  document.getElementById('btn-list').onclick = ()=> run('list');
+  document.getElementById('btn-seed3').onclick = ()=> run('seed-minimal');
+  document.getElementById('btn-seed30').onclick = ()=> run('seed-30');
+  document.getElementById('btn-clear').onclick = ()=> { out.innerHTML=''; cmd.focus(); };
+  cmd.focus();
 })();
 </script>
-</body></html>"""
+</body>
+</html>
+"""
 
 
 @app.get("/")
 def index():
     return render_template_string(INDEX_HTML)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
