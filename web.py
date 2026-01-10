@@ -94,6 +94,16 @@ button.primary{color:var(--green);border-color:#243026;background:#0f1512}
 .err{color:var(--red)}
 .blue{color:var(--blue)}
 .kbd{background:#0c1218;border:1px solid var(--border);padding:2px 6px;border-radius:4px}
+
+/* --- CLI cheat-sheet styles --- */
+.cheatsheet{margin:14px 0 8px;padding:12px 14px;border:1px solid #2e2e2e;border-radius:10px;background:#0f1115}
+.cheatsheet details>summary{cursor:pointer;font-weight:700;color:#9ae6b4;margin-bottom:8px}
+.cheatsheet code,.cheatsheet pre{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size:13px;white-space:pre-wrap}
+.cheatsheet .grid{display:grid;gap:8px}
+.cheatsheet .grid .card{padding:8px 10px;border:1px solid #262626;border-radius:8px;background:#0b0d12}
+.cheatsheet .label{font-size:12px;color:#a0aec0;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em}
+
 </style>
 </head>
 <body>
@@ -102,7 +112,47 @@ button.primary{color:var(--green);border-color:#243026;background:#0f1512}
   <p>Try <span class="kbd">help</span>, <span class="kbd">list</span>, <span class="kbd">find rose</span>,
      <span class="kbd">add-perf "Amber Sky" --brand "Noctis" --price 72 --notes "amber,vanilla"</span>,
      <span class="kbd">delete "Amber Sky"</span>, <span class="kbd">seed-minimal</span>, <span class="kbd">seed-30</span>.
-     ↑/↓ for history, <span class="kbd">Ctrl+L</span> to clear.</p>
+     ↑/↓ for history, <span class="kbd">Ctrl+L</span> to clear.
+
+<div class="cheatsheet">
+  <details open>
+    <summary>How to use the AromaVault CLI (add • find • update • delete)</summary>
+    <div class="grid">
+      <div class="card">
+        <div class="label">Add a perfume</div>
+        <pre><code>add-perf "Amber Sky" --brand "Noctis" --price 72 --notes "amber,vanilla"</code></pre>
+        <small>Quotes are required when values contain spaces.</small>
+      </div>
+      <div class="card">
+        <div class="label">Find perfumes</div>
+        <pre><code>find amber
+find "rose musk"</code></pre>
+        <small>Searches name, brand, and notes (case-insensitive).</small>
+      </div>
+      <div class="card">
+        <div class="label">Show one</div>
+        <pre><code>show "Amber Sky"</code></pre>
+        <small>Accepts an exact ID or a name substring.</small>
+      </div>
+      <div class="card">
+        <div class="label">Update rating / stock</div>
+        <pre><code>update-perf "Amber Sky" --rating 4.6 --stock 3</code></pre>
+        <small>Target by exact name or exact ID.</small>
+      </div>
+      <div class="card">
+        <div class="label">Delete by name or ID</div>
+        <pre><code>delete "Amber Sky"</code></pre>
+      </div>
+      <div class="card">
+        <div class="label">Seed sample data</div>
+        <pre><code>seed-minimal
+seed-30</code></pre>
+        <small><i>seed-30</i> falls back to 3 if the large seed isn’t available.</small>
+      </div>
+    </div>
+  </details>
+</div>
+</p>
 </header>
 <main>
   <div class="term">
