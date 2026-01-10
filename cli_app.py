@@ -1,224 +1,145 @@
-from __future__ import annotations
-
-import json
-import sys
-import uuid
+from typing import List
 
 import click
 
 import storage
 
 
-# Exported Click group the tests use
-@click.group(name="aromavault")
+def _fmt_line(p: dict) -> str:
+    notes = ",".join(p.get("notes") or [])
+    price = float(p.get("price", 0))
+    rating = float(p.get("rating", 0))
+    return f"{p.get('id')} | {p.get('name')} | {p.get('brand')} | £{price:.1f} | rating {rating:.1f} | {notes}"
+
+
+@click.group(name="aromavault", help="AromaVault CLI")
 def app() -> None:
-    """AromaVault CLI"""
+    """CLI group."""
 
 
-def _safe_notes(notes: str | None) -> list[str]:
-    if not notes:
-        return []
-    return [s.strip() for s in str(notes).split(",") if s.strip()]
-
-
-# ---- seed commands ----
-@app.command(name="seed-minimal")
-def seed_minimal_cmd() -> None:
+# ---------- Seeding ----------
+@app.command("seed-minimal")
+def seed_minimal_cmd():
     """Write 3 sample perfumes (overwrites current DB)."""
     n = storage.seed_minimal()
     click.echo(f"Seeded {n} perfumes")
 
 
-@app.command(name="seed-30")
-def seed_30_cmd() -> None:
+@app.command("seed-30")
+def seed_30_cmd():
     """Write 30 sample perfumes if available, else fall back to 3."""
     seeder = getattr(storage, "seed_30", None) or storage.seed_minimal
     n = seeder()
     click.echo(f"Seeded {n} perfumes")
 
 
-# ---- CRUD-ish commands used in README and handy for assessors ----
-
-
-@app.command(name="list")
-def list_cmd() -> None:
-    """List all perfumes (compact)."""
+# ---------- List ----------
+@app.command("list")
+def list_cmd():
+    """List all perfumes (with header)."""
     items = storage.list_perfumes()
-    for it in items:
-        pid = it.get("id") or it.get("name") or ""
-        name = it.get("name", "")
-        brand = it.get("brand", "")
-        price = it.get("price", 0)
-        rating = it.get("rating", 0)
-        notes = ",".join(it.get("notes", []) or [])
-        click.echo(f"{pid} | {name} | {brand} | £{price} | rating {rating} | {notes}")
+    click.echo(f"Perfumes ({len(items)})")
+    for p in items:
+        click.echo(_fmt_line(p))
 
 
-@app.command(name="find")
-@click.argument("query", nargs=1)
-def find_cmd(query: str) -> None:
-    """Find by name/brand/notes (case-insensitive)."""
-    q = query.strip().lower()
+# Some tests/environments expect this alias. Keep both.
+@app.command("list-perfumes-cmd")
+def list_perfumes_cmd():
+    """Alias: list all perfumes (with header)."""
     items = storage.list_perfumes()
-    for it in items:
-        hay = " ".join(
-            [
-                str(it.get("name", "")),
-                str(it.get("brand", "")),
-                " ".join(it.get("notes", []) or []),
-            ]
-        ).lower()
-        if q in hay:
-            click.echo(json.dumps(it, ensure_ascii=False))
+    click.echo(f"Perfumes ({len(items)})")
+    for p in items:
+        click.echo(_fmt_line(p))
 
 
-@app.command(name="show")
-@click.argument("key", nargs=1)
-def show_cmd(key: str) -> None:
-    """Show a single perfume by id (exact) or name substring (case-insensitive)."""
-    key_l = key.lower().strip()
-    items = storage.list_perfumes()
-
-    # exact id first
-    for it in items:
-        if str(it.get("id", "")).strip().lower() == key_l:
-            click.echo(json.dumps(it, ensure_ascii=False, indent=2))
-            return
-
-    # then by name substring
-    for it in items:
-        if key_l in str(it.get("name", "")).lower():
-            click.echo(json.dumps(it, ensure_ascii=False, indent=2))
-            return
-
-    click.echo("Not found", err=True)
-    sys.exit(1)
-
-
-@app.command(name="add-perf")
-@click.argument("name", nargs=1)
-@click.option("--brand", required=True, help="Brand name")
+# ---------- Add ----------
+@app.command("add-perf")
+@click.argument("name", type=str)
+@click.option("--brand", required=True, type=str, help="Brand name")
 @click.option("--price", required=True, type=float, help="Price (GBP)")
-@click.option("--notes", required=False, help="Comma separated notes, e.g. 'rose,musk'")
-def add_perf_cmd(name: str, brand: str, price: float, notes: str | None) -> None:
+@click.option("--notes", default="", type=str, help='Comma-separated notes e.g. "rose,musk"')
+def add_perf_cmd(name: str, brand: str, price: float, notes: str):
     """Add a perfume with minimal fields used in tests."""
+    notes_list: List[str] = [n.strip() for n in notes.split(",") if n.strip()] if notes else []
     payload = {
-        "id": str(uuid.uuid4()),
-        "name": name.strip(),
-        "brand": brand.strip(),
+        "name": name,
+        "brand": brand,
         "price": float(price),
-        "notes": _safe_notes(notes),
+        "notes": notes_list,
         "allergens": [],
         "rating": 0.0,
         "stock": 0,
     }
-    created = storage.add_perfume(payload)
-    pid = created.get("id") or created.get("name") or name
-    click.echo(f"Added: {pid}")
+    stored = storage.add_perfume(payload)
+    click.echo(f"Added: {stored.get('id')}")
 
 
-@app.command(name="delete")
-@click.argument("key", nargs=1)
-def delete_cmd(key: str) -> None:
-    """Delete by exact id or exact name (case-insensitive)."""
-    key_l = key.strip().lower()
+# ---------- Find ----------
+@app.command("find")
+@click.argument("query", type=str)
+def find_cmd(query: str):
+    """Find by name/brand/notes (case-insensitive)."""
+    q = query.lower().strip()
     items = storage.list_perfumes()
-    kept = []
-    deleted_id = None
-    for it in items:
-        if (str(it.get("id", "")).lower() == key_l) or (str(it.get("name", "")).lower() == key_l):
-            deleted_id = it.get("id") or it.get("name")
+    hits = []
+    for p in items:
+        if q in (p.get("name", "").lower()) or q in (p.get("brand", "").lower()):
+            hits.append(p)
             continue
-        kept.append(it)
-
-    if deleted_id is None:
-        click.echo("Not found", err=True)
-        sys.exit(1)
-
-    storage.save_perfumes(kept)
-    click.echo(f"Deleted: {deleted_id}")
+        notes = [str(n).lower() for n in (p.get("notes") or [])]
+        if any(q in n for n in notes):
+            hits.append(p)
+    for p in hits:
+        click.echo(_fmt_line(p))
 
 
-__all__ = ["app"]
-
-
-# --- Alias to satisfy tests expecting "list-perfumes-cmd"
-import click  # safe if already imported above
-
-
-@app.command("list-perfumes-cmd")
-@click.pass_context
-def list_perfumes_cmd(ctx):
-    """Alias for `list` (keeps tests happy)."""
-    # If we can, invoke the existing 'list' command's callback.
-    cmd = app.commands.get("list")
-    if cmd is not None and getattr(cmd, "callback", None):
-        return ctx.invoke(cmd.callback)
-    # Fallback: print a compact list directly from storage.
-    from storage import list_perfumes
-
-    items = list_perfumes()
-    click.echo(f"Perfumes ({len(items)})")
-    for it in items:
-        name = it.get("name", "")
-        brand = it.get("brand", "")
-        price = it.get("price", 0)
-        click.echo(f"- {name} — {brand} (£{price})")
-
-
-@app.command("list-perfumes-cmd")
-def list_perfumes_cmd():
-    """List all perfumes (with header line 'Perfumes (N)')."""
+# ---------- Show ----------
+@app.command("show")
+@click.argument("token", type=str)
+def show_cmd(token: str):
+    """Show a single perfume by id (exact) or name substring (case-insensitive)."""
     items = storage.list_perfumes()
-    click.echo(f"Perfumes ({len(items)})")
-    for x in items:
-        notes = ",".join(x.get("notes") or [])
-        price = x.get("price", 0)
-        rating = float(x.get("rating", 0) or 0)
-        click.echo(f"{x['id']} | {x['name']} | {x['brand']} | £{price} | rating {rating} | {notes}")
+    t = token.lower().strip()
+    for p in items:
+        if str(p.get("id")) == token:
+            click.echo(_fmt_line(p))
+            return
+    for p in items:
+        if t in str(p.get("name", "")).lower():
+            click.echo(_fmt_line(p))
+            return
+    click.echo("Not found")
 
 
-# ------------------------------------
-# UPDATE command (safe to append)
-# ------------------------------------
-import click
-
-import storage
-
-
-@app.command("update-perf")
-@click.argument("identifier", metavar="ID_OR_EXACT_NAME")
-@click.option("--name", help="New name")
-@click.option("--brand", help="New brand")
-@click.option("--price", type=float, help="New price (GBP)")
-@click.option("--notes", help='Comma-separated notes, e.g. "rose,musk"')
-@click.option("--rating", type=float, help="New rating 0.0–5.0")
-@click.option("--stock", type=int, help="New stock qty (>=0)")
-def update_perf_cmd(identifier, name, brand, price, notes, rating, stock):
-    """
-    Update a perfume by exact ID or exact Name.
-    Only fields provided will be updated.
-    """
-    updates = {
-        "name": name,
-        "brand": brand,
-        "price": price,
-        "rating": rating,
-        "stock": stock,
-    }
-    if notes is not None:
-        updates["notes"] = [n.strip() for n in notes.split(",") if n.strip()]
-
-    try:
-        updated = storage.update_perfume(identifier, **updates)
-    except ValueError as e:
-        click.echo(f"Error: {e}")
+# ---------- Delete ----------
+@app.command("delete")
+@click.argument("token", type=str)
+def delete_cmd(token: str):
+    """Delete by exact id or exact name (case-insensitive)."""
+    token_l = token.lower().strip()
+    items = storage.list_perfumes()
+    target_id = None
+    for p in items:
+        if str(p.get("id")) == token or str(p.get("name", "")).lower() == token_l:
+            target_id = str(p.get("id"))
+            break
+    if not target_id:
+        click.echo("Not found")
         raise SystemExit(1)
 
-    # Pretty output (compact)
-    out_notes = ",".join(updated.get("notes") or [])
-    click.echo(
-        f"Updated: {updated.get('id','?')} | {updated.get('name','?')} | "
-        f"{updated.get('brand','?')} | £{updated.get('price',0)} | "
-        f"rating {updated.get('rating',0)} | {out_notes} | stock {updated.get('stock',0)}"
-    )
+    # Use storage helpers if available; otherwise rewrite DB list
+    if hasattr(storage, "delete_by_id"):
+        ok = storage.delete_by_id(target_id)
+    elif hasattr(storage, "delete_perfume"):
+        ok = storage.delete_perfume(target_id)  # type: ignore[attr-defined]
+    else:
+        data = [p for p in items if str(p.get("id")) != target_id]
+        storage.write_db(data)
+        ok = True
+
+    if ok:
+        click.echo(f"Deleted: {target_id}")
+    else:
+        click.echo("Not found")
+        raise SystemExit(1)

@@ -328,3 +328,20 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nGoodbye!")
         sys.exit(0)
+
+if __name__ == "__main__":
+    import sys
+
+    # If CLI args are provided, delegate to the Click CLI (prints help etc.)
+    if len(sys.argv) > 1:
+        from click.testing import CliRunner
+
+        from cli_app import app as _click_app
+
+        r = CliRunner().invoke(_click_app, sys.argv[1:])
+        if r.stdout:
+            print(r.stdout, end="")
+        if r.stderr:
+            print(r.stderr, end="")
+        raise SystemExit(r.exit_code)
+    # Otherwise, fall back to interactive menu (existing code will run)

@@ -1,0 +1,312 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from click.testing import CliRunner
+from flask import Flask, Response, jsonify, render_template_string, request
+
+import cli_app
+import storage
+
+runner = CliRunner()
+app = Flask(__name__, static_folder="static", static_url_path="/static")
+
+
+# Seed once per dyno boot / first request (Flask 3 compatible)
+@app.before_request
+def seed_once():
+    if not app.config.get("SEEDED"):
+        if not storage.list_perfumes():
+            seeder = getattr(storage, "seed_30", None) or storage.seed_minimal
+            n = seeder()
+            app.logger.info(f"[boot] seeded {n} perfumes")
+        app.config["SEEDED"] = True
+
+
+@app.get("/api/hello")
+def api_hello():
+    return jsonify(ok=True)
+
+
+@app.get("/api/perfumes")
+def api_list():
+    items = storage.list_perfumes()
+    return jsonify(count=len(items), items=items)
+
+
+def _to_float(x):
+    if isinstance(x, (int, float)):
+        return float(x)
+    if x is None:
+        return 0.0
+    s = str(x)
+    s = s.replace("£", "").replace(",", "").strip()
+    try:
+        return float(s) if s else 0.0
+    except Exception:
+        return 0.0
+
+
+def _to_int(x):
+    try:
+        return int(str(x).strip())
+    except Exception:
+        return 0
+
+
+@app.post("/api/admin/add")
+def api_admin_add():
+    data = request.get_json(silent=True) or request.form or {}
+    name = (data.get("name") or "").strip()
+    brand = (data.get("brand") or "").strip()
+    notes = [s.strip() for s in (data.get("notes") or "").split(",") if s.strip()]
+    payload = {
+        "name": name,
+        "brand": brand,
+        "price": _to_float(data.get("price")),
+        "notes": notes,
+        "allergens": data.get("allergens") or [],
+        "rating": _to_float(data.get("rating")),
+        "stock": _to_int(data.get("stock")),
+    }
+    if not name or not brand:
+        return jsonify(ok=False, error="name and brand are required"), 400
+    created = storage.add_perfume(payload)
+    return jsonify(ok=True, item=created), 200
+
+
+@app.post("/api/admin/delete")
+def api_admin_delete():
+    data = request.get_json(silent=True) or request.form or {}
+    pid = (data.get("id") or data.get("name") or "").strip()
+    if not pid:
+        return jsonify(ok=False, error="id or name required"), 400
+    ok = storage.delete_perfume(pid)
+    return jsonify(ok=bool(ok)), 200
+
+
+if __name__ == "__main__":
+    # local dev run
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+INDEX_HTML = r"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AromaVault</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{--bg:#0b0d10;--panel:#0f1317;--border:#1b2228;--fg:#e6edf3;--muted:#9aa4ad;--accent:#7bd389;--danger:#ff8585}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell}
+    header{padding:20px;border-bottom:1px solid var(--border)}
+    header h1{margin:0 0 8px}
+    header p{margin:0;color:var(--muted)}
+    main{max-width:1100px;margin:0 auto;padding:18px}
+    .bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    input[type="text"],input[type="number"]{background:var(--panel);border:1px solid var(--border);color:var(--fg);padding:10px 12px;border-radius:10px;outline:none;min-width:220px}
+    input[type="text"]:focus,input[type="number"]:focus{border-color:#2a3947}
+    button{background:#1a2229;color:var(--fg);border:1px solid var(--border);padding:10px 14px;border-radius:10px;cursor:pointer}
+    button.primary{background:#1e2d24;border-color:#2c3a30;color:var(--accent)}
+    button.danger{background:#2a1717;border-color:#412424;color:var(--danger)}
+    table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+    th{background:#0d1014;text-align:left}
+    tr:last-child td{border-bottom:0}
+    .note{color:var(--muted);font-size:12px;margin-top:8px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:16px}
+    .modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;max-width:560px;width:100%;padding:16px}
+    .modal h3{margin:0 0 8px}
+    .kbd{background:#11171c;border:1px solid var(--border);padding:2px 6px;border-radius:4px}
+    .pill{display:inline-block;padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:#10161b;margin-right:6px;margin-bottom:4px}
+    .right{display:flex;gap:8px;align-items:center;margin-left:auto}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AromaVault</h1>
+    <p>Interactive UI for browsing, searching, adding and deleting perfumes (same JSON DB as the CLI).</p>
+  </header>
+
+  <main>
+    <div class="bar">
+      <input id="q" type="text" placeholder="Search name, brand, notes…" />
+      <button id="btn-clear">Clear</button>
+      <div class="right">
+        <button id="btn-seed3">Seed 3</button>
+        <button id="btn-seed30">Seed 30</button>
+        <button id="btn-add" class="primary">Add / Update</button>
+      </div>
+    </div>
+
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th style="width:28%">Name</th>
+          <th style="width:16%">Brand</th>
+          <th style="width:10%">Rating</th>
+          <th>Notes</th>
+          <th style="width:12%">Price</th>
+          <th style="width:15%">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="note">Data from <span class="kbd">/api/perfumes</span>. Actions use <span class="kbd">/api/admin/add</span> and <span class="kbd">/api/admin/delete</span>.</div>
+  </main>
+
+  <!-- Add/Update Modal -->
+  <div class="modal-bg" id="modal-bg" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <h3 id="modal-title">Add / Update Perfume</h3>
+      <div class="grid">
+        <div><label>Name<br><input id="f-name" type="text" placeholder="Amber Sky"></label></div>
+        <div><label>Brand<br><input id="f-brand" type="text" placeholder="Noctis"></label></div>
+        <div><label>Price (£)<br><input id="f-price" type="number" step="0.01" placeholder="72"></label></div>
+        <div><label>Rating (0–5)<br><input id="f-rating" type="number" step="0.1" min="0" max="5" placeholder="4.2"></label></div>
+        <div style="grid-column:1 / -1"><label>Notes (comma separated)<br><input id="f-notes" type="text" placeholder="amber, vanilla"></label></div>
+        <div><label>Stock<br><input id="f-stock" type="number" step="1" min="0" placeholder="2"></label></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <input id="f-replace" type="checkbox" /> <label for="f-replace">Replace if a perfume with the same <b>name</b> exists (delete then add)</label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+        <button id="btn-cancel">Cancel</button>
+        <button id="btn-save" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = (sel) => document.querySelector(sel);
+  const tbody = $('#tbody');
+  const q = $('#q');
+
+  function money(n){ return new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'}).format(Number(n||0)); }
+  function tagList(notes){ return (notes||[]).map(n=>`<span class="pill">${n}</span>`).join(' '); }
+
+  async function fetchAll(){
+    const res = await fetch('/api/perfumes');
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.items || []);
+  }
+
+  function render(items){
+    const term = q.value.trim().toLowerCase();
+    const filtered = term ? items.filter(x=>{
+      const hay = [x.name||'', x.brand||'', (x.notes||[]).join(' ')].join(' ').toLowerCase();
+      return hay.includes(term);
+    }) : items;
+
+    tbody.innerHTML = filtered.map(x => `
+      <tr data-id="${x.id||''}">
+        <td>${x.name||''}</td>
+        <td>${x.brand||''}</td>
+        <td>${(x.rating ?? 0).toFixed(1)}</td>
+        <td>${tagList(x.notes)}</td>
+        <td>${money(x.price)}</td>
+        <td>
+          <button class="danger" data-action="del" data-id="${x.id||''}" data-name="${x.name||''}">Delete</button>
+          <button data-action="use" data-name="${x.name||''}" data-brand="${x.brand||''}" data-price="${x.price||''}" data-rating="${x.rating||''}" data-notes="${(x.notes||[]).join(', ')}" data-stock="${x.stock||0}">Use in form</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function refresh(){
+    const items = await fetchAll();
+    render(items);
+  }
+
+  async function runSeed(cmd){
+    try{
+      const r = await fetch('/api/cli', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({args: cmd})});
+      if (r.ok){ await refresh(); }
+    }catch(e){ console.warn('No /api/cli, or failed.'); }
+  }
+
+  tbody.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button'); if (!btn) return;
+    const action = btn.dataset.action;
+    if (action === 'del'){
+      const id = btn.dataset.id, name = btn.dataset.name;
+      if (!confirm(\`Delete "\${name}"?\`)) return;
+      const r = await fetch('/api/admin/delete', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id, name })
+      });
+      const res = await r.json().catch(()=>({}));
+      alert((res && res.output) ? res.output.trim() : 'Delete attempted.');
+      await refresh();
+    } else if (action === 'use'){
+      $('#f-name').value   = btn.dataset.name || '';
+      $('#f-brand').value  = btn.dataset.brand || '';
+      $('#f-price').value  = btn.dataset.price || '';
+      $('#f-rating').value = btn.dataset.rating || '';
+      $('#f-notes').value  = btn.dataset.notes || '';
+      $('#f-stock').value  = btn.dataset.stock || 0;
+      $('#f-replace').checked = false;
+      $('#modal-bg').style.display = 'flex';
+      $('#f-name').focus();
+    }
+  });
+
+  q.addEventListener('input', refresh);
+  $('#btn-clear').addEventListener('click', ()=>{ q.value=''; refresh(); });
+
+  $('#btn-seed3').addEventListener('click', ()=>runSeed('seed-minimal'));
+  $('#btn-seed30').addEventListener('click', ()=>runSeed('seed-30'));
+
+  $('#btn-add').addEventListener('click', ()=>{
+    $('#f-name').value=''; $('#f-brand').value='';
+    $('#f-price').value=''; $('#f-rating').value='';
+    $('#f-notes').value=''; $('#f-stock').value='0';
+    $('#f-replace').checked=false;
+    $('#modal-bg').style.display='flex'; $('#f-name').focus();
+  });
+  $('#btn-cancel').addEventListener('click', ()=> $('#modal-bg').style.display='none' );
+
+  $('#btn-save').addEventListener('click', async ()=>{
+    const name = $('#f-name').value.trim();
+    const brand = $('#f-brand').value.trim();
+    const price = parseFloat($('#f-price').value||0);
+    const rating = parseFloat($('#f-rating').value||0);
+    const notes = ($('#f-notes').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const stock = parseInt($('#f-stock').value||'0',10);
+    const replace = $('#f-replace').checked;
+
+    if (!name || !brand){ alert('Name and Brand are required.'); return; }
+
+    if (replace){
+      await fetch('/api/admin/delete', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ name })
+      }).catch(()=>{});
+    }
+
+    const resp = await fetch('/api/admin/add', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, brand, price, rating, notes, stock })
+    });
+    const data = await resp.json().catch(()=>({}));
+    alert((data && data.message) ? data.message : 'Saved.');
+    $('#modal-bg').style.display='none';
+    await refresh();
+  });
+
+  refresh();
+})();
+</script>
+</body></html>"""
+
+
+@app.get("/")
+def index():
+    return render_template_string(INDEX_HTML)
