@@ -12,20 +12,17 @@ app = Flask(__name__, static_folder="static", template_folder="templates")
 runner = CliRunner()
 app.config.setdefault("SEEDED", False)
 
-
 # ---------- seed-once (safe for Flask 3) ----------
-            app.logger.info(f"[boot] seeded {n} perfumes")
+
     except Exception as e:
         app.logger.warning(f"[boot] seeding skipped: {e}")
     finally:
         app.config["SEEDED"] = True
 
-
 # ---------- JSON API (kept compatible with your app) ----------
 @app.get("/api/perfumes")
 def api_perfumes():
     return jsonify(storage.list_perfumes())
-
 
 @app.post("/api/admin/add")
 def api_admin_add():
@@ -41,7 +38,6 @@ def api_admin_add():
     # rec might be id or dict depending on your storage; return something useful
     return jsonify({"ok": True, "result": rec})
 
-
 # ---------- CLI bridge ----------
 @app.post("/api/cli")
 def api_cli():
@@ -55,7 +51,6 @@ def api_cli():
     res = runner.invoke(cli_app.app, argv)
     out = (res.output or "").rstrip()
     return jsonify(ok=(res.exit_code == 0), exit_code=res.exit_code, output=out)
-
 
 # ---------- Terminal-style homepage ----------
 INDEX_HTML = r"""<!doctype html>
@@ -205,11 +200,9 @@ find "rose musk"</code></pre>
 </html>
 """
 
-
 @app.get("/")
 def index():
     return render_template_string(INDEX_HTML)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
