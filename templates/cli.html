@@ -61,7 +61,7 @@
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ args: raw })
       });
-      const data = await res.text();
+      const data = await res.json();
       const out = (data && data.output) ? data.output : "(no output)";
       print(out, data && data.ok ? "ok" : "err");
     } catch(e) {
@@ -85,7 +85,7 @@
 
   // greet & auto list on load
   print("Welcome to AromaVault Web CLI");
-<!-- removed find chip -->
+  print("Type 'list' or 'find rose' to start.");
   runCommand("list");
 })();
 </script>
