@@ -1,10 +1,11 @@
+from __future__ import annotations
+
+
 def esc(s: str) -> str:
     s = "" if s is None else str(s)
     s = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     return s.replace("\r\n", "\n").replace("\n", "<br>")
 
-
-from __future__ import annotations
 
 import shlex
 from typing import Tuple
