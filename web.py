@@ -49,7 +49,7 @@ def index():
 <header>AromaVault — Web Terminal</header>
 <main>
   <div class="chips">
-    <div class="chip" onclick="ins('help')">help</div>
+    <div class="chip" onclick="ins('--help')">help</div>
     <div class="chip" onclick="ins('list')">list</div>
     <div class="chip" onclick="ins('find rose')">find rose</div>
     <div class="chip" onclick="ins('add-perf \"Amber Sky\" --brand \"Noctis\" --price 72 --notes \"amber,vanilla\"')">add-perf…</div>
