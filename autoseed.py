@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 try:
     import storage
@@ -6,13 +6,44 @@ except Exception as e:  # pragma: no cover
     storage = None  # if storage import fails we simply skip
 
 SAMPLES: List[Dict] = [
-    {"name":"Rose Dusk","brand":"Floral","price":55,"notes":["rose","musk"],"rating":4.5,"stock":3},
-    {"name":"Amber Trail","brand":"Nocturne","price":72,"notes":["amber","vanilla","tonka"],"rating":4.6,"stock":2},
-    {"name":"Ocean Mist","brand":"Aqua","price":49,"notes":["marine","citrus","salt"],"rating":4.0,"stock":5},
-    {"name":"Vetiver Line","brand":"Terra","price":67,"notes":["vetiver","grapefruit","pepper"],"rating":4.3,"stock":4},
-    {"name":"Jasmine Night","brand":"Floral","price":58,"notes":["jasmine","white musk"],"rating":4.4,"stock":3},
-    {"name":"Patchouli Drift","brand":"Terra","price":61,"notes":["patchouli","woods"],"rating":4.1,"stock":2},
+    {"name": "Rose Dusk", "brand": "Floral", "price": 55, "notes": ["rose", "musk"], "stock": 3},
+    {
+        "name": "Amber Trail",
+        "brand": "Nocturne",
+        "price": 72,
+        "notes": ["amber", "vanilla", "tonka"],
+        "stock": 2,
+    },
+    {
+        "name": "Ocean Mist",
+        "brand": "Aqua",
+        "price": 49,
+        "notes": ["marine", "citrus", "salt"],
+        "stock": 5,
+    },
+    {
+        "name": "Vetiver Line",
+        "brand": "Terra",
+        "price": 67,
+        "notes": ["vetiver", "grapefruit", "pepper"],
+        "stock": 4,
+    },
+    {
+        "name": "Jasmine Night",
+        "brand": "Floral",
+        "price": 58,
+        "notes": ["jasmine", "white musk"],
+        "stock": 3,
+    },
+    {
+        "name": "Patchouli Drift",
+        "brand": "Terra",
+        "price": 61,
+        "notes": ["patchouli", "woods"],
+        "stock": 2,
+    },
 ]
+
 
 def install(app):
     """Seed once per dyno, on the first incoming request, if DB is empty."""

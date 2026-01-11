@@ -1,131 +1,91 @@
-from typing import List
-
 import click
 
 import storage
 
 
-def _fmt_line(p: dict) -> str:
-    notes = ",".join(p.get("notes") or [])
-    price = float(p.get("price", 0))
-    rating = float(p.get("rating", 0))
-    return f"{p.get('id')} | {p.get('name')} | {p.get('brand')} | £{price:.1f} | rating {rating:.1f} | {notes}"
+@click.group(name="aromavault")
+def app():
+    """AromaVault CLI — add, list (with filters), show, update, delete."""
+    pass
 
 
-@click.group(name="aromavault", help="AromaVault CLI")
-def app() -> None:
-    """CLI group."""
-
-
-# ---------- Seeding ----------
+@app.command("add-perf")
+@click.argument("name")
+@click.option("--brand", required=True, help="Brand (max length enforced)")
+@click.option("--price", required=True, type=float, help="Price (0..MAX)")
+@click.option("--notes", default="", help="Comma-separated notes")
+@click.option("--stock", default=0, type=int, help="Initial stock (>=0)")
+def add_perf(name, brand, price, notes, stock):
+    """Add a perfume."""
+    try:
+        item = storage.add_perfume(
+            {"name": name, "brand": brand, "price": price, "notes": notes, "stock": stock}
+        )
+        click.echo(f"Added: {item['name']} ({item['id']})")
+    except Exception as e:
+        click.echo(f"Error: {e}")
 
 
 @app.command("list")
-def list_cmd():
-    """List all perfumes (with header)."""
-    items = storage.list_perfumes()
+@click.option("--brand", default=None, help="Filter by brand (substring)")
+@click.option("--name", "name_sub", default=None, help="Filter by name (substring)")
+@click.option("--notes", "notes_sub", default=None, help="Filter by notes (substring)")
+def list_cmd(brand, name_sub, notes_sub):
+    """List all, or filter by --brand/--name/--notes."""
+    items = storage.list_perfumes(brand=brand, name=name_sub, notes_sub=notes_sub)
     click.echo(f"Perfumes ({len(items)})")
-    for p in items:
-        click.echo(_fmt_line(p))
+    for it in items:
+        click.echo(f"- {it['name']} — {it['brand']} — £{it['price']:.2f} — stock {it['stock']}")
 
 
-# Some tests/environments expect this alias. Keep both.
-@app.command("list-perfumes-cmd")
-def list_perfumes_cmd():
-    """Alias: list all perfumes (with header)."""
-    items = storage.list_perfumes()
-    click.echo(f"Perfumes ({len(items)})")
-    for p in items:
-        click.echo(_fmt_line(p))
-
-
-# ---------- Add ----------
-@app.command("add-perf")
-@click.argument("name", type=str)
-@click.option("--brand", required=True, type=str, help="Brand name")
-@click.option("--price", required=True, type=float, help="Price (GBP)")
-@click.option("--notes", default="", type=str, help='Comma-separated notes e.g. "rose,musk"')
-def add_perf_cmd(name: str, brand: str, price: float, notes: str):
-    """Add a perfume with minimal fields used in tests."""
-    notes_list: List[str] = [n.strip() for n in notes.split(",") if n.strip()] if notes else []
-    payload = {
-        "name": name,
-        "brand": brand,
-        "price": float(price),
-        "notes": notes_list,
-        "allergens": [],
-        "rating": 0.0,
-        "stock": 0,
-    }
-    stored = storage.add_perfume(payload)
-    click.echo(f"Added: {stored.get('id')}")
-
-
-# ---------- Find ----------
-@app.command("find")
-@click.argument("query", type=str)
-def find_cmd(query: str):
-    """Find by name/brand/notes (case-insensitive)."""
-    q = query.lower().strip()
-    items = storage.list_perfumes()
-    hits = []
-    for p in items:
-        if q in (p.get("name", "").lower()) or q in (p.get("brand", "").lower()):
-            hits.append(p)
-            continue
-        notes = [str(n).lower() for n in (p.get("notes") or [])]
-        if any(q in n for n in notes):
-            hits.append(p)
-    for p in hits:
-        click.echo(_fmt_line(p))
-
-
-# ---------- Show ----------
 @app.command("show")
-@click.argument("token", type=str)
-def show_cmd(token: str):
-    """Show a single perfume by id (exact) or name substring (case-insensitive)."""
-    items = storage.list_perfumes()
-    t = token.lower().strip()
-    for p in items:
-        if str(p.get("id")) == token:
-            click.echo(_fmt_line(p))
-            return
-    for p in items:
-        if t in str(p.get("name", "")).lower():
-            click.echo(_fmt_line(p))
-            return
-    click.echo("Not found")
+@click.argument("id_or_name")
+def show_cmd(id_or_name):
+    """Show exactly one item by ID or exact Name."""
+    it = storage.get_by_id_or_name(id_or_name)
+    if not it:
+        click.echo("Not found")
+        return
+    click.echo(f"ID: {it['id']}")
+    click.echo(f"Name: {it['name']}")
+    click.echo(f"Brand: {it['brand']}")
+    click.echo(f"Price: £{it['price']:.2f}")
+    click.echo(f"Notes: {', '.join(it['notes']) if it.get('notes') else '-'}")
+    click.echo(f"Stock: {it['stock']}")
 
 
-# ---------- Delete ----------
+@app.command("update-perf")
+@click.argument("id_or_name")
+@click.option("--name", default=None)
+@click.option("--brand", default=None)
+@click.option("--price", type=float, default=None)
+@click.option("--notes", default=None, help="Comma-separated")
+@click.option("--stock", type=int, default=None)
+def update_perf(id_or_name, name, brand, price, notes, stock):
+    """Update fields on a perfume (no rating)."""
+    payload = {}
+    if name is not None:
+        payload["name"] = name
+    if brand is not None:
+        payload["brand"] = brand
+    if price is not None:
+        payload["price"] = price
+    if notes is not None:
+        payload["notes"] = notes
+    if stock is not None:
+        payload["stock"] = stock
+    if not payload:
+        click.echo("Nothing to update")
+        return
+    try:
+        ok = storage.update_perfume(id_or_name, payload)
+        click.echo("Updated" if ok else "Not found")
+    except Exception as e:
+        click.echo(f"Error: {e}")
+
+
 @app.command("delete")
-@click.argument("token", type=str)
-def delete_cmd(token: str):
-    """Delete by exact id or exact name (case-insensitive)."""
-    token_l = token.lower().strip()
-    items = storage.list_perfumes()
-    target_id = None
-    for p in items:
-        if str(p.get("id")) == token or str(p.get("name", "")).lower() == token_l:
-            target_id = str(p.get("id"))
-            break
-    if not target_id:
-        click.echo("Not found")
-        raise SystemExit(1)
-
-    # Use storage helpers if available; otherwise rewrite DB list
-    if hasattr(storage, "delete_by_id"):
-        ok = storage.delete_by_id(target_id)
-    elif hasattr(storage, "delete_perfume"):
-        ok = storage.delete_perfume(target_id)  # type: ignore[attr-defined]
-    else:
-        data = [p for p in items if str(p.get("id")) != target_id]
-        storage.write_db(data)
-        ok = True
-
-    if ok:
-        click.echo(f"Deleted: {target_id}")
-    else:
-        click.echo("Not found")
-        raise SystemExit(1)
+@click.argument("id_or_name")
+def delete_cmd(id_or_name):
+    """Delete by exact ID or exact Name (names are unique)."""
+    click.echo("Deleted" if storage.delete_perfume(id_or_name) else "Not found")
