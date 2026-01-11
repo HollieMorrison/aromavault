@@ -124,10 +124,18 @@ def index():
 
 @app.post("/api/cli")
 def api_cli():
+    from click.testing import CliRunner
+    from flask import Response, request
+
+    import cli_app
+
     data = request.get_json(silent=True) or {}
     cmd = (data.get("cmd") or "").strip()
-    output, code = run_cli(cmd)
-    return jsonify({"ok": code == 0, "exit_code": code, "output": output})
+    argv = cmd.split() if cmd else ["--help"]
+
+    r = CliRunner().invoke(cli_app.app, argv)
+    out = r.output or ""
+    return Response(out, mimetype="text/plain; charset=utf-8")
 
 
 @app.get("/api/perfumes")
