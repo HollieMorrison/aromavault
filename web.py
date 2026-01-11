@@ -31,7 +31,7 @@ def index():
 <meta charset="utf-8" />
 <title>AromaVault — Web Terminal</title>
 <style>
-  :root { color-scheme: dark; }
+  :root { color-scheme: dark; }s
   body { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 0; background:#0b0f14; color:#d7e3ff; }
   header { padding: 18px 24px; font-weight: 700; font-size: 22px; background:#0f1620; border-bottom:1px solid #1b2533;}
   main { padding: 16px 20px; max-width: 1100px; margin: 0 auto;}
@@ -190,6 +190,7 @@ except Exception as _e:  # pragma: no cover
 if "SEEDED_ONCE" not in app.config:
     app.config["SEEDED_ONCE"] = False
 
+
 def _seed_if_empty():
     if app.config.get("SEEDED_ONCE", False) or storage is None:
         return
@@ -200,12 +201,54 @@ def _seed_if_empty():
 
         # Minimal sample set (tweak freely)
         samples = [
-            {"name":"Rose Dusk","brand":"Floral","price":55,"notes":["rose","musk"],"rating":4.5,"stock":3},
-            {"name":"Amber Trail","brand":"Nocturne","price":72,"notes":["amber","vanilla","tonka"],"rating":4.6,"stock":2},
-            {"name":"Ocean Mist","brand":"Aqua","price":49,"notes":["marine","citrus","salt"],"rating":4.0,"stock":5},
-            {"name":"Vetiver Line","brand":"Terra","price":67,"notes":["vetiver","grapefruit","pepper"],"rating":4.3,"stock":4},
-            {"name":"Jasmine Night","brand":"Floral","price":58,"notes":["jasmine","white musk"],"rating":4.4,"stock":3},
-            {"name":"Patchouli Drift","brand":"Terra","price":61,"notes":["patchouli","woods"],"rating":4.1,"stock":2},
+            {
+                "name": "Rose Dusk",
+                "brand": "Floral",
+                "price": 55,
+                "notes": ["rose", "musk"],
+                "rating": 4.5,
+                "stock": 3,
+            },
+            {
+                "name": "Amber Trail",
+                "brand": "Nocturne",
+                "price": 72,
+                "notes": ["amber", "vanilla", "tonka"],
+                "rating": 4.6,
+                "stock": 2,
+            },
+            {
+                "name": "Ocean Mist",
+                "brand": "Aqua",
+                "price": 49,
+                "notes": ["marine", "citrus", "salt"],
+                "rating": 4.0,
+                "stock": 5,
+            },
+            {
+                "name": "Vetiver Line",
+                "brand": "Terra",
+                "price": 67,
+                "notes": ["vetiver", "grapefruit", "pepper"],
+                "rating": 4.3,
+                "stock": 4,
+            },
+            {
+                "name": "Jasmine Night",
+                "brand": "Floral",
+                "price": 58,
+                "notes": ["jasmine", "white musk"],
+                "rating": 4.4,
+                "stock": 3,
+            },
+            {
+                "name": "Patchouli Drift",
+                "brand": "Terra",
+                "price": 61,
+                "notes": ["patchouli", "woods"],
+                "rating": 4.1,
+                "stock": 2,
+            },
         ]
         for p in samples:
             storage.add_perfume(p)
@@ -216,8 +259,11 @@ def _seed_if_empty():
     finally:
         app.config["SEEDED_ONCE"] = True
 
+
 # Trigger once on the first incoming request
 @app.before_request
 def _ensure_seeded_once():
     _seed_if_empty()
+
+
 # -------------------- /AUTO_SEED_SILENT ----------------------
