@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import shlex
 from typing import Tuple
 
@@ -15,10 +14,7 @@ app = Flask(__name__)
 
 # ---------------------- helpers ----------------------
 def run_cli(cmdline: str) -> Tuple[str, int]:
-    """
-    Execute your Click CLI (cli_app.app) with a shell-like string.
-    Returns (output, exit_code).
-    """
+    """Execute your Click CLI (cli_app.app) with a shell-like string."""
     argv = shlex.split(cmdline or "")
     if not argv:
         return "No command provided.\n", 2
@@ -57,6 +53,7 @@ def index():
     <div class="chip" onclick="ins('list')">list</div>
     <div class="chip" onclick="ins('find rose')">find rose</div>
     <div class="chip" onclick="ins('add-perf \"Amber Sky\" --brand \"Noctis\" --price 72 --notes \"amber,vanilla\"')">add-perf…</div>
+    <div class="chip" onclick="ins('update-perf \"Amber Sky\" --price 80 --stock 5')">update-perf…</div>
     <div class="chip" onclick="ins('show \"Amber Sky\"')">show "Amber Sky"</div>
     <div class="chip" onclick="ins('delete \"Amber Sky\"')">delete "Amber Sky"</div>
     <div class="chip" onclick="clearOut()">clear</div>
@@ -73,10 +70,17 @@ def index():
     <strong>How to use</strong><br><br>
     <u>Add a perfume</u><br>
     <code>add-perf "Amber Sky" --brand "Noctis" --price 72 --notes "amber,vanilla"</code><br><br>
+
+    <u>Update a perfume</u> (by exact <b>name</b> or by <b>id</b>)<br>
+    <code>update-perf "Amber Sky" --price 80 --stock 5</code><br>
+    <code>update-perf &lt;id&gt; --rating 4.7</code><br><br>
+
     <u>Find perfumes</u><br>
     <code>find amber</code> &nbsp; (searches name / brand / notes, case-insensitive)<br><br>
+
     <u>Show one perfume</u><br>
     <code>show "Amber Sky"</code> &nbsp; or &nbsp; <code>show &lt;id&gt;</code><br><br>
+
     <u>Delete</u><br>
     <code>delete "Amber Sky"</code> &nbsp; or &nbsp; <code>delete &lt;id&gt;</code><br>
   </div>
@@ -127,14 +131,49 @@ def api_perfumes():
 @app.post("/api/admin/add")
 def api_admin_add():
     data = request.get_json(silent=True) or {}
-    # Normalise notes: allow string "a,b" or list ["a","b"]
     notes = data.get("notes")
     if isinstance(notes, str):
         data["notes"] = [n.strip() for n in notes.split(",") if n.strip()]
     return jsonify(storage.add_perfume(data))
 
 
-# --------------- dev entrypoint (optional) ---------------
+@app.post("/api/admin/update")
+def api_admin_update():
+    """
+    JSON:
+    {
+      "id": "...",          # or "name": "Exact Name"
+      "name": "New Name",
+      "brand": "New Brand",
+      "price": 99.0,
+      "notes": "rose,musk"  # or ["rose","musk"]
+      "rating": 4.6,
+      "stock": 5
+    }
+    """
+    data = request.get_json(silent=True) or {}
+    ident = data.get("id") or data.get("name")
+    if not ident:
+        return jsonify({"ok": False, "error": "id or name is required"}), 400
+
+    allowed = {"name", "brand", "price", "notes", "rating", "stock", "allergens"}
+    changes = {k: v for k, v in data.items() if k in allowed}
+
+    # normalise notes
+    if "notes" in changes and isinstance(changes["notes"], str):
+        changes["notes"] = [n.strip() for n in changes["notes"].split(",") if n.strip()]
+
+    res = storage.update_perfume(ident, changes)
+    if isinstance(res, tuple):
+        ok, updated = res
+    else:
+        ok, updated = bool(res), None
+
+    if not ok:
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    return jsonify({"ok": True, "perfume": updated or {}})
+
+
 if __name__ == "__main__":
-    # Local dev run: python web.py
     app.run(debug=True, host="0.0.0.0", port=5000)
