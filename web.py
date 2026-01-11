@@ -177,3 +177,47 @@ def api_admin_update():
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+
+
+# ---------------------- AUTO_SEED_SILENT ----------------------
+# Seed the DB once per dyno if it's empty. Nothing is shown in the UI.
+try:
+    import storage  # uses storage.DEFAULT_DB
+except Exception as _e:  # pragma: no cover
+    storage = None
+
+# Flag to ensure we try only once per dyno lifetime
+if "SEEDED_ONCE" not in app.config:
+    app.config["SEEDED_ONCE"] = False
+
+def _seed_if_empty():
+    if app.config.get("SEEDED_ONCE", False) or storage is None:
+        return
+    try:
+        if len(storage.list_perfumes()) > 0:
+            # Already has data; skip.
+            return
+
+        # Minimal sample set (tweak freely)
+        samples = [
+            {"name":"Rose Dusk","brand":"Floral","price":55,"notes":["rose","musk"],"rating":4.5,"stock":3},
+            {"name":"Amber Trail","brand":"Nocturne","price":72,"notes":["amber","vanilla","tonka"],"rating":4.6,"stock":2},
+            {"name":"Ocean Mist","brand":"Aqua","price":49,"notes":["marine","citrus","salt"],"rating":4.0,"stock":5},
+            {"name":"Vetiver Line","brand":"Terra","price":67,"notes":["vetiver","grapefruit","pepper"],"rating":4.3,"stock":4},
+            {"name":"Jasmine Night","brand":"Floral","price":58,"notes":["jasmine","white musk"],"rating":4.4,"stock":3},
+            {"name":"Patchouli Drift","brand":"Terra","price":61,"notes":["patchouli","woods"],"rating":4.1,"stock":2},
+        ]
+        for p in samples:
+            storage.add_perfume(p)
+
+        app.logger.info(f"[seed] Silent seeded {len(samples)} perfumes")
+    except Exception as e:  # pragma: no cover
+        app.logger.warning(f"[seed] Silent seed skipped: {e}")
+    finally:
+        app.config["SEEDED_ONCE"] = True
+
+# Trigger once on the first incoming request
+@app.before_request
+def _ensure_seeded_once():
+    _seed_if_empty()
+# -------------------- /AUTO_SEED_SILENT ----------------------
