@@ -18,22 +18,8 @@ def app() -> None:
 
 
 # ---------- Seeding ----------
-@app.command("seed-minimal")
-def seed_minimal_cmd():
-    """Write 3 sample perfumes (overwrites current DB)."""
-    n = storage.seed_minimal()
-    click.echo(f"Seeded {n} perfumes")
 
 
-@app.command("seed-30")
-def seed_30_cmd():
-    """Write 30 sample perfumes if available, else fall back to 3."""
-    seeder = getattr(storage, "seed_30", None) or storage.seed_minimal
-    n = seeder()
-    click.echo(f"Seeded {n} perfumes")
-
-
-# ---------- List ----------
 @app.command("list")
 def list_cmd():
     """List all perfumes (with header)."""

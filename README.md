@@ -65,7 +65,6 @@ This project helps users quickly **browse** a curated list of perfumes (name, br
 
 ### Existing Features
 - ✅ **Seed data:** 3 (minimal) or 30 sample perfumes  
-- ✅ **CLI commands:** `list`, `list-perfumes-cmd`, `show`, `find`, `add-perf`, `update-perf`, `delete`, `seed-minimal`, `seed-30`  
 - ✅ **Web Terminal**: type CLI commands directly in the browser on the live app  
 - ✅ **Web API** endpoints to list and add perfumes  
 - ✅ **JSON “DB”** (`db.json`) that’s easy to inspect/reset  
@@ -141,10 +140,8 @@ CLI Commands
 The CLI group name is aromavault. To keep it simple, we invoke via Python directly (no extra entrypoint needed).
 
 # 3 sample perfumes
-python -c "import cli_app; cli_app.app()" seed-minimal
 
 # 30 sample perfumes (falls back to 3 if not available)
-python -c "import cli_app; cli_app.app()" seed-30
 
 # list all perfumes
 python -c "import cli_app; cli_app.app()" list
@@ -247,7 +244,6 @@ Manual Testing
 
 Seed & List
 
-Run seed-minimal then list → should show 3 items.
 
 Add & Show
 

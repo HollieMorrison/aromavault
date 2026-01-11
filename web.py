@@ -14,15 +14,6 @@ app.config.setdefault("SEEDED", False)
 
 
 # ---------- seed-once (safe for Flask 3) ----------
-@app.before_request
-def seed_once():
-    if app.config["SEEDED"]:
-        return
-    try:
-        items = storage.list_perfumes()
-        if not items:
-            seeder = getattr(storage, "seed_30", None) or storage.seed_minimal
-            n = seeder()
             app.logger.info(f"[boot] seeded {n} perfumes")
     except Exception as e:
         app.logger.warning(f"[boot] seeding skipped: {e}")
@@ -111,7 +102,7 @@ button.primary{color:var(--green);border-color:#243026;background:#0f1512}
   <h1>AromaVault — Web Terminal</h1>
   <p>Try <span class="kbd">help</span>, <span class="kbd">list</span>, <span class="kbd">find rose</span>,
      <span class="kbd">add-perf "Amber Sky" --brand "Noctis" --price 72 --notes "amber,vanilla"</span>,
-     <span class="kbd">delete "Amber Sky"</span>, <span class="kbd">seed-minimal</span>, <span class="kbd">seed-30</span>.
+     <span class="kbd">delete "Amber Sky"</span>, <span class="kbd"></span>, <span class="kbd"></span>.
      ↑/↓ for history, <span class="kbd">Ctrl+L</span> to clear.
 
 <div class="cheatsheet">
@@ -145,9 +136,9 @@ find "rose musk"</code></pre>
       </div>
       <div class="card">
         <div class="label">Seed sample data</div>
-        <pre><code>seed-minimal
-seed-30</code></pre>
-        <small><i>seed-30</i> falls back to 3 if the large seed isn’t available.</small>
+        <pre><code>
+</code></pre>
+        <small><i></i> falls back to 3 if the large seed isn’t available.</small>
       </div>
     </div>
   </details>
@@ -164,8 +155,8 @@ seed-30</code></pre>
     <div class="btns">
       <button class="primary" id="btn-help">help</button>
       <button id="btn-list">list</button>
-      <button id="btn-seed3">seed-minimal</button>
-      <button id="btn-seed30">seed-30</button>
+      <button id="btn-seed3"></button>
+      <button id="btn-seed30"></button>
       <button id="btn-clear">clear</button>
     </div>
     <div class="hint">This web terminal invokes the same Click CLI as your local app (server-side).</div>
@@ -204,8 +195,8 @@ seed-30</code></pre>
 
   document.getElementById('btn-help').onclick = ()=> run('help');
   document.getElementById('btn-list').onclick = ()=> run('list');
-  document.getElementById('btn-seed3').onclick = ()=> run('seed-minimal');
-  document.getElementById('btn-seed30').onclick = ()=> run('seed-30');
+  document.getElementById('btn-seed3').onclick = ()=> run('');
+  document.getElementById('btn-seed30').onclick = ()=> run('');
   document.getElementById('btn-clear').onclick = ()=> { out.innerHTML=''; cmd.focus(); };
   cmd.focus();
 })();
