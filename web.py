@@ -124,18 +124,11 @@ def index():
 
 @app.post("/api/cli")
 def api_cli():
-    from click.testing import CliRunner
-    from flask import Response, request
+    from flask import request, jsonify
 
-    import cli_app
-
-    data = request.get_json(silent=True) or {}
-    cmd = (data.get("cmd") or "").strip()
-    argv = cmd.split() if cmd else ["--help"]
-
-    r = CliRunner().invoke(cli_app.app, argv)
-    out = r.output or ""
-    return Response(out, mimetype="text/plain; charset=utf-8")
+    cmd = (request.json or {}).get("cmd", "").strip()
+    out = run_cli(cmd)  # function already in web.py that executes your CLI
+    return jsonify({"ok": True, "out": out})
 
 
 @app.get("/api/perfumes")
