@@ -14,8 +14,6 @@ app.config.setdefault("SEEDED", False)
 
 # ---------- seed-once (safe for Flask 3) ----------
 
-    except Exception as e:
-        app.logger.warning(f"[boot] seeding skipped: {e}")
     finally:
         app.config["SEEDED"] = True
 
