@@ -7,7 +7,6 @@ samples = [
         "price": 55,
         "notes": ["rose", "musk"],
         "rating": 4.5,
-        "stock": 3,
     },
     {
         "name": "Amber Trail",
@@ -15,7 +14,6 @@ samples = [
         "price": 72,
         "notes": ["amber", "vanilla", "tonka"],
         "rating": 4.6,
-        "stock": 2,
     },
     {
         "name": "Ocean Mist",
@@ -23,7 +21,6 @@ samples = [
         "price": 49,
         "notes": ["marine", "citrus", "salt"],
         "rating": 4.0,
-        "stock": 5,
     },
     {
         "name": "Vetiver Line",
@@ -31,7 +28,6 @@ samples = [
         "price": 67,
         "notes": ["vetiver", "grapefruit", "pepper"],
         "rating": 4.3,
-        "stock": 4,
     },
     {
         "name": "Jasmine Night",
@@ -39,7 +35,6 @@ samples = [
         "price": 58,
         "notes": ["jasmine", "white musk"],
         "rating": 4.4,
-        "stock": 3,
     },
 ]
 for p in samples:

@@ -155,8 +155,7 @@ def api_admin_update():
       "price": 99.0,
       "notes": "rose,musk"  # or ["rose","musk"]
       "rating": 4.6,
-      "stock": 5
-    }
+      }
     """
     data = request.get_json(silent=True) or {}
     ident = data.get("id") or data.get("name")
@@ -214,7 +213,6 @@ def _seed_if_empty():
                 "price": 55,
                 "notes": ["rose", "musk"],
                 "rating": 4.5,
-                "stock": 3,
             },
             {
                 "name": "Amber Trail",
@@ -222,7 +220,6 @@ def _seed_if_empty():
                 "price": 72,
                 "notes": ["amber", "vanilla", "tonka"],
                 "rating": 4.6,
-                "stock": 2,
             },
             {
                 "name": "Ocean Mist",
@@ -230,7 +227,6 @@ def _seed_if_empty():
                 "price": 49,
                 "notes": ["marine", "citrus", "salt"],
                 "rating": 4.0,
-                "stock": 5,
             },
             {
                 "name": "Vetiver Line",
@@ -238,7 +234,6 @@ def _seed_if_empty():
                 "price": 67,
                 "notes": ["vetiver", "grapefruit", "pepper"],
                 "rating": 4.3,
-                "stock": 4,
             },
             {
                 "name": "Jasmine Night",
@@ -246,7 +241,6 @@ def _seed_if_empty():
                 "price": 58,
                 "notes": ["jasmine", "white musk"],
                 "rating": 4.4,
-                "stock": 3,
             },
             {
                 "name": "Patchouli Drift",
@@ -254,7 +248,6 @@ def _seed_if_empty():
                 "price": 61,
                 "notes": ["patchouli", "woods"],
                 "rating": 4.1,
-                "stock": 2,
             },
         ]
         for p in samples:

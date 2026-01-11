@@ -1,68 +1,63 @@
+from __future__ import annotations
+
 import click
 
 import storage
 
 
-@click.group(name="aromavault")
+@click.group(help="AromaVault CLI")
 def app():
-    """AromaVault CLI — add, list (with filters), show, update, delete."""
     pass
 
 
-@app.command("add-perf")
+@app.command("add-perf", help="Add a perfume (unique name).")
 @click.argument("name")
-@click.option("--brand", required=True, help="Brand (max length enforced)")
-@click.option("--price", required=True, type=float, help="Price (0..MAX)")
+@click.option("--brand", required=True, help="Brand (≤80 chars)")
+@click.option("--price", required=True, type=float, help="Price (0..1e6)")
 @click.option("--notes", default="", help="Comma-separated notes")
-@click.option("--stock", default=0, type=int, help="Initial stock (>=0)")
-def add_perf(name, brand, price, notes, stock):
-    """Add a perfume."""
+def add_perf(name, brand, price, notes):
     try:
-        item = storage.add_perfume(
-            {"name": name, "brand": brand, "price": price, "notes": notes, "stock": stock}
-        )
+        item = storage.add_perfume({"name": name, "brand": brand, "price": price, "notes": notes})
         click.echo(f"Added: {item['name']} ({item['id']})")
     except Exception as e:
         click.echo(f"Error: {e}")
 
 
-@app.command("list")
-@click.option("--brand", default=None, help="Filter by brand (substring)")
-@click.option("--name", "name_sub", default=None, help="Filter by name (substring)")
-@click.option("--notes", "notes_sub", default=None, help="Filter by notes (substring)")
-def list_cmd(brand, name_sub, notes_sub):
-    """List all, or filter by --brand/--name/--notes."""
-    items = storage.list_perfumes(brand=brand, name=name_sub, notes_sub=notes_sub)
-    click.echo(f"Perfumes ({len(items)})")
-    for it in items:
-        click.echo(f"- {it['name']} — {it['brand']} — £{it['price']:.2f} — stock {it['stock']}")
+@app.command("list", help="List perfumes (optionally filter).")
+@click.option("--brand", default=None, help="Filter by brand substring")
+@click.option("--notes", "notes_sub", default=None, help="Filter by note substring")
+@click.option("--name", "name_sub", default=None, help="Filter by name substring")
+def list_cmd(brand, notes_sub, name_sub):
+    rows = storage.list_perfumes(brand_sub=brand, notes_sub=notes_sub, name_sub=name_sub)
+    if not rows:
+        click.echo("No perfumes found")
+        return
+    for r in rows:
+        n = ",".join(r.get("notes", []))
+        click.echo(f"{r['id']} | {r['name']} | {r['brand']} | £{r['price']:.2f} | {n}")
 
 
-@app.command("show")
+@app.command("show", help="Show exactly one perfume by ID or unique name.")
 @click.argument("id_or_name")
 def show_cmd(id_or_name):
-    """Show exactly one item by ID or exact Name."""
-    it = storage.get_by_id_or_name(id_or_name)
-    if not it:
+    r = storage.get_one(id_or_name)
+    if not r:
         click.echo("Not found")
         return
-    click.echo(f"ID: {it['id']}")
-    click.echo(f"Name: {it['name']}")
-    click.echo(f"Brand: {it['brand']}")
-    click.echo(f"Price: £{it['price']:.2f}")
-    click.echo(f"Notes: {', '.join(it['notes']) if it.get('notes') else '-'}")
-    click.echo(f"Stock: {it['stock']}")
+    click.echo(f"ID: {r['id']}")
+    click.echo(f"Name: {r['name']}")
+    click.echo(f"Brand: {r['brand']}")
+    click.echo(f"Price: £{r['price']:.2f}")
+    click.echo(f"Notes: {', '.join(r.get('notes', []))}")
 
 
-@app.command("update-perf")
+@app.command("update", help="Update fields on a perfume.")
 @click.argument("id_or_name")
 @click.option("--name", default=None)
 @click.option("--brand", default=None)
 @click.option("--price", type=float, default=None)
 @click.option("--notes", default=None, help="Comma-separated")
-@click.option("--stock", type=int, default=None)
-def update_perf(id_or_name, name, brand, price, notes, stock):
-    """Update fields on a perfume (no rating)."""
+def update_cmd(id_or_name, name, brand, price, notes):
     payload = {}
     if name is not None:
         payload["name"] = name
@@ -72,8 +67,6 @@ def update_perf(id_or_name, name, brand, price, notes, stock):
         payload["price"] = price
     if notes is not None:
         payload["notes"] = notes
-    if stock is not None:
-        payload["stock"] = stock
     if not payload:
         click.echo("Nothing to update")
         return
@@ -84,8 +77,29 @@ def update_perf(id_or_name, name, brand, price, notes, stock):
         click.echo(f"Error: {e}")
 
 
-@app.command("delete")
+@app.command("delete", help="Delete by ID or unique name.")
 @click.argument("id_or_name")
 def delete_cmd(id_or_name):
-    """Delete by exact ID or exact Name (names are unique)."""
-    click.echo("Deleted" if storage.delete_perfume(id_or_name) else "Not found")
+    ok = storage.delete_perfume(id_or_name)
+    click.echo("Deleted" if ok else "Not found")
+
+
+# Optional helper for tests/quick setup (no output besides a simple line)
+@app.command("seed-minimal", help="Seed 3 sample perfumes if DB is empty.")
+def seed_minimal():
+    if storage.list_perfumes():
+        click.echo("Already seeded")
+        return
+    samples = [
+        {"name": "Rose Dusk", "brand": "Floral", "price": 55, "notes": "rose,musk"},
+        {"name": "Citrus Glow", "brand": "Aurora", "price": 42.5, "notes": "citrus,bergamot"},
+        {"name": "Amber Night", "brand": "Noctis", "price": 60, "notes": "amber,vanilla"},
+    ]
+    added = 0
+    for s in samples:
+        try:
+            storage.add_perfume(s)
+            added += 1
+        except Exception:
+            pass
+    click.echo(f"Seeded {added}")
