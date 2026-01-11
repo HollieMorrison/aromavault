@@ -1,45 +1,23 @@
-#!/usr/bin/env python
-import json
-import sys
-from pathlib import Path
-
+from __future__ import annotations
 import storage
 
-QUIET = "--quiet" in sys.argv
+SAMPLES = [
+    {"name": "Amber Sky",   "brand": "Noctis", "price": 72.0, "notes": "amber,vanilla"},
+    {"name": "Azure Mist",  "brand": "Noctis", "price": 59.0, "notes": "citrus,musk"},
+    {"name": "Rose Dusk",   "brand": "Floral", "price": 55.0, "notes": "rose,musk"},
+    {"name": "Cedar Grove", "brand": "Terra",  "price": 64.0, "notes": "cedar,wood"},
+    {"name": "Citrinella",  "brand": "Luma",   "price": 47.0, "notes": "citrus,herbal"},
+    {"name": "Velvet Oud",  "brand": "Noctis", "price": 88.0, "notes": "oud,spice"},
+]
 
-
-def seed_items():
-    # simple demo catalog (unique names)
-    items = [
-        {"name": "Amber Sky", "brand": "Noctis", "price": 72.0, "notes": "amber,vanilla"},
-        {"name": "Azure Mist", "brand": "Noctis", "price": 59.0, "notes": "citrus,musk"},
-        {"name": "Rose Dusk", "brand": "Floral", "price": 55.0, "notes": "rose,musk"},
-        {"name": "Cedar Lake", "brand": "Nord", "price": 64.0, "notes": "cedar,wood"},
-        {"name": "Citrus Bloom", "brand": "Verde", "price": 49.0, "notes": "citrus,floral"},
-        {"name": "Velvet Night", "brand": "Noctis", "price": 80.0, "notes": "vanilla,tonka"},
-    ]
-    return items
-
-
-def main():
-    try:
-        if storage.list_perfumes():
-            if not QUIET:
-                print("DB already has data; skipping seeding")
-            return 0
-        n = 0
-        for it in seed_items():
-            storage.add_perfume(it)
-            n += 1
-        if not QUIET:
-            print(f"Seeded {n} perfumes")
-        return 0
-    except Exception as e:
-        if not QUIET:
-            print("Seed error:", e)
-        # don't fail the deploy because of seed
-        return 0
-
+def run():
+    items = storage._load()
+    if items:
+        print("[seed] DB already has data, skipping")
+        return
+    for s in SAMPLES:
+        storage.add_perfume(s)
+    print(f"[seed] Inserted {len(SAMPLES)} perfumes")
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    run()
