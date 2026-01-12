@@ -1,6 +1,6 @@
+import run as cli_app
 from typer.testing import CliRunner
 
-import run as cli_app
 import storage
 
 runner = CliRunner()
