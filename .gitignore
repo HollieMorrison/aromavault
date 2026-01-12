@@ -1,121 +1,33 @@
-core.Microsoft*
-core.mongo*
-core.python*
-env.py
-__pycache__/
-*.py[cod]
-node_modules/
-.github/
-
-__pycache__/
-.vscode/
-*.bak
-# local backups and artifacts
-*.backup.*.py
-web.backup.*.py
-cli_app.backup.*.py
-storage.backup.*.py
-NUL
-# Backups
-*.backup.*.py
-web.backup.*.py
-cli_app.backup.*.py
-storage.backup.*.py
-NUL
-
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
+*.egg-info/
+.eggs/
 
-# Test / tooling caches
+# Tools & tests
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# Editor
+# Editors/OS
 .vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
-# Local env & data
+# Local/runtime data
+db.json
+tmp*.json
+tmp-*json
+*.backup.*
+*.bak
+*.log
+
+# Local env
+.venv/
 .env
-db.json
-data.json
-
-# Local backup/scratch files
-cli_app.backup.*.py
-web.backup.*.py
-storage.backup.*.py
-NUL
-*.pyc
-__pycache__/
-.db.json
-/db.json
-
-# Local backups & bytecode
-*.backup.*.py
-cli_app.backup.*.py
-storage.backup.*.py
-__pycache__/
-*.pyc
-*.pyo
-
-# Local backups & bytecode
-*.backup.*.py
-cli_app.backup.*.py
-storage.backup.*.py
-__pycache__/
-*.pyc
-*.pyo
-
-# Local backups & bytecode
-*.backup.*.py
-cli_app.backup.*.py
-storage.backup.*.py
-__pycache__/
-*.pyc
-*.pyo
-
-# Local junk
-cli_app.backup.*.py
-storage.backup.*.py
-*_backup*.py
-__pycache__/
-*.pyc
-/db.json
-# backups & bytecode
-*.backup.*.py
-__pycache__/
-*.pyc
-*.pyo
-# local db
-db.json
-.db.json
-
-# --- student cleanups ---
-cli_app.backup.*.py
-storage.backup.*.py
-web.backup.*.py
-*.pyc
-*.pyo
-__pycache__/
-.pytest_cache/
-NUL
-
-# --- student cleanups ---
-cli_app.backup.*.py
-storage.backup.*.py
-web.backup.*.py
-*.pyc
-*.pyo
-__pycache__/
-.pytest_cache/
-NUL
-
-# Local backup files
-web.bak.*.py
-cli_app.backup.*.py
-tmp-cli.json
-
-# Local backup files
-web.bak.*.py
-cli_app.backup.*.py
-tmp-cli.json
+.env.*
